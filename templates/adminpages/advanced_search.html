@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<head>
+  <title>Advanced Search</title>
+</head>
+
+<body>
+ <form method="GET" id="searchForm">
+    <div class="flex justify-center px-8 pt-6 pb-2 mx-[4rem] my-2">
+        <button type="submit" name="reset" class="w-4/12 bg-red-600 hover:bg-red-700 text-white rounded-l-lg" onclick="resetForm(event)"
+        >Reset Filters
+        </button>
+        <button class="w-4/12 bg-blue-600 hover:bg-blue-700 text-white" type="submit">
+        <i class="bi bi-search"></i>
+      </button>
+      <input class="w-4/12 px-2" type="text" name="q" id="searchInput" value="{{ query }}" placeholder="Name" />
+
+      <!-- Additional search fields for advanced search -->
+      <input class="w-4/12 px-2" type="text" name="race" placeholder="Race" value="{{ race }}" />
+      <select class="w-4/12 px-2" name="gender">
+        <option class="text-gray-400" value="">Gender</option>
+        <option value="Male" {% if gender == "Male" %}selected{% endif %}>Male</option>
+        <option value="Female" {% if gender == "Female" %}selected{% endif %}>Female</option>
+        <option value="Non-binary" {% if gender == "Non-binary" %}selected{% endif %}>Non-binary</option>
+        <option value="Other" {% if gender == "Other" %}selected{% endif %}>Other</option>
+      </select>
+      <input class="w-4/12 px-2" type="text" name="occupation" placeholder="Occupation" value="{{ occupation }}" />
+      <input class="w-4/12 px-2" type="number" name="age_min" placeholder="Min Age" value="{{ age_min }}" />
+      <input class="w-4/12 px-2" type="number" name="age_max" placeholder="Max Age" value="{{ age_max }}" />
+      <input class="w-4/12 px-2" type="number" name="hours_min" placeholder="Min Hours" value="{{ hours_min }}" />
+      <input class="w-4/12 px-2" type="number" name="hours_max" placeholder="Max Hours" value="{{ hours_max }}" />
+      <input class="w-4/12 px-2" type="number" name="attendance" placeholder="Attendance" value="{{ attendance }}" />
+      <select class="w-4/12 px-2" name="role">
+        <option value="">Select Role</option>
+        <option value="surfer" {% if role == "surfer" %}selected{% endif %}>Surfer</option>
+        <option value="volunteer" {% if role == "volunteer" %}selected{% endif %}>Volunteer</option>
+        <option value="headcoach" {% if role == "headcoach" %}selected{% endif %}>Head Coach</option>
+      </select>
+      <input class="w-4/12 px-2" type="text" name="disability" placeholder="Disability" value="{{ disability }}" />
+      <input type="hidden" id="selectedUsersIds" name="selected_users_ids" value="" />
+
+      
+    </div>
+  </form>
+
+  <div class="flex flex-col bg-white shadow-md rounded px-8 pt-6 pb-8 mx-8 my-2 h-screen"> <!--Main div-->
+    <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
+      <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
+        <div class="overflow-auto">
+
+          <table class="min-w-full text-left text-sm font-light">
+            <thead class="border-b font-medium border-neutral-500 bg-gray-200">
+              <tr class="border-b border-neutral-500">
+                <th scope="col" class="px-6 py-4">Name</th>
+                <th scope="col" class="px-6 py-4">Gender</th>
+                <th scope="col" class="px-6 py-4">Age</th>
+                <th scope="col" class="px-6 py-4">Occupation</th>
+                <th scope="col" class="px-6 py-4">Disability</th>
+                <th scope="col" class="px-6 py-4">Role</th>
+                <th scope="col" class="px-6 py-4">Sessions Attended</th>
+                <th scope="col" class="px-6 py-4">Hours</th>
+                <th scope="col" class="px-6 py-4">Select</th>
+              </tr>
+            </thead>
+
+            <tbody>
+            <form method="GET" action="{% url 'roxy:Adv_search' %}" id="userSelectForm">
+              <input type="hidden" id="addSelectedFlag" name="add_selected" value="" />
+              {% for volunteer in volunteers %}
+              <tr class="border-b border-neutral-500">
+                <td class="whitespace-nowrap px-6 py-4">{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{ volunteer.gender }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{volunteer.age }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{volunteer.occupation }}</td>
+                <td class="whitespace-nowrap px-6 py-4">-</td>
+                <td class="whitespace-nowrap px-6 py-4">{{volunteer.role}}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{volunteer.attendance }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{ volunteer.hours }} hrs</td>
+                <td class="whitespace-nowrap px-6 py-4">
+                <input type="checkbox" name="selected_users" value="{{ volunteer.id }}" />
+              </td>
+              {% empty %}
+                <tr class="border-b border-neutral-500">
+                  <td class="whitespace-nowrap px-6 py-4 font-semibold">No volunteers found matching your criteria.</td>
+                </tr>
+              </tr>
+              {% endfor %}
+
+              {% for surfer in surfers %}
+              
+              <tr class="border-b border-neutral-500">
+                <td class="whitespace-nowrap px-6 py-4">{{ surfer.user.first_name }} {{ surfer.user.last_name }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{ surfer.gender }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{surfer.age }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{surfer.occupation }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{surfer.disability }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{surfer.role}}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{surfer.attendance }}</td>
+                <td class="whitespace-nowrap px-6 py-4">{{ surfer.hours }} hrs</td>
+                <td class="whitespace-nowrap px-6 py-4">
+                <input type="checkbox" name="selected_users" value="{{ surfer.id }}" />
+                </td>
+                {% empty %}
+                <tr class="border-b border-neutral-500">
+                  <td class="whitespace-nowrap px-6 py-4 font-semibold">No surfers found matching your criteria.</td>
+                </tr>
+              </tr>
+              {% endfor %}
+              <button type="submit" name="add_selected">Add Selected Users</button>
+              </form>
+
+            </tbody>
+          </table>
+         
+      </div>
+    </div>
+  </div>
+</div> <!-- Closing Main div -->
+</body>
+{% block scripts %}
+
+<script>
+
+function resetForm(event) {
+    event.preventDefault(); // prevent the form from submitting
+
+    const form = document.getElementById('searchForm'); // get the form
+
+    if(form) {
+        const elements = form.elements;
+
+        for(let i = 0; i < elements.length; i++) {
+            if(elements[i].type !== 'submit' && elements[i].type !== 'reset' && elements[i].type !== 'button') {
+                elements[i].value = '';
+            }
+        }
+    } else {
+        console.log("No form element found with id 'searchForm'.");
+    }
+
+    // You only need to clear out the 'selectedUsersIds' hidden input field once
+    const hiddenField = document.getElementById('selectedUsersIds');
+    if(hiddenField) {
+        hiddenField.value = '';
+        console.log("Hidden field cleared.");
+    } else {
+        console.log("No hidden field found with id 'selectedUsersIds'.");
+    }
+
+    console.log("resetForm completed");
+}
+
+  function addSelectedUsers() {
+    console.log("addSelectedUsers triggered");
+    // Find all checked checkboxes with name "selected_users"
+    const checkboxes = document.querySelectorAll('input[name="selected_users"]:checked');
+    // Get an array of selected user IDs
+    const selectedUserIds = Array.from(checkboxes).map((checkbox) => checkbox.value);
+    // Set the selected user IDs in the hidden input field value
+    document.getElementById('selectedUsersIds').value = selectedUserIds.join(',');
+    // Set the "add_selected" flag
+    document.getElementById('addSelectedFlag').value = "1";
+    // Submit the form
+    document.getElementById('userSelectForm').submit();
+    console.log("addSelectedUsers completed");
+  }
+</script>
+{% endblock %}
+
+{% endblock %}

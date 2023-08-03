@@ -1,0 +1,512 @@
+{% load static %}
+
+<head>
+  <link href="{% static 'src/output.css' %}" rel="stylesheet" />
+    <script src="{% static 'js/form_util.js' %}"></script>
+  <title>Surfer Creation Form</title>
+</head>
+
+<body class="bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500">
+  {% include 'include/messages.html' 
+
+  <form method="post" action="{% url 'roxy:UserCreate_Volunteer' %}">
+    {% csrf_token %}
+
+    <!-- User Creation Form -->
+    <div class="flex justify-center items-center">
+      <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 my-2">
+        <h2 class="mb-4">Start your surfing journey now!</h2>
+        
+        <!--Auto setting user's role to surfer-->
+        <input type="hidden" name="role" value="Surfer">
+
+        <!--Name fields -->
+        <div class="-mx-3 md:flex mb-6">
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ user_form.first_name.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ user_form.first_name.label }}:
+            </label>
+            <input 
+            type="text" name="{{ user_form.first_name.html_name }}"
+            id="first_name" class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+            required value="{{ user_form.first_name.value }}">
+          </div>
+
+          <!-- Last name field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ user_form.last_name.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ user_form.last_name.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ user_form.last_name.html_name }}"
+              id="last_name"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Email field -->
+        <div class="md:w-full">
+          <label
+            for="{{ user_form.email.id_for_label }}"
+            class="block text-sm font-normal"
+            >{{ user_form.email.label }}:
+          </label>
+          <input
+            type="email"
+            name="{{ user_form.email.html_name }}"
+            id="email"
+            class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+            placeholder="youremail@example.com"
+            required
+          />
+        </div>
+
+        <!-- Password fields -->
+
+        <div class="-mx-3 md:flex mb-6">
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ user_form.password1.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ user_form.password1.label }}:
+            </label>
+            <input
+              type="password"
+              name="{{ user_form.password1.html_name }}"
+              id="password1"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ user_form.password2.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ user_form.password2.label }}:
+            </label>
+            <input
+              type="password"
+              name="{{ user_form.password2.html_name }}"
+              id="password2"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Surfer Form -->
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Age field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.age.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.age.label }}:
+            </label>
+            <input
+              type="number"
+              name="{{ volunteer_form.age.html_name }}"
+              id= "age"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <!-- DOB field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.DOB.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.DOB.label }}:
+            </label>
+            <input
+              type="date"
+              name="{{ volunteer_form.DOB.html_name }}"
+              id= "DOB"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Gender field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.gender.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.gender.label }}:
+            </label>
+            <select
+              name="{{ volunteer_form.gender.html_name }}"
+              id= "gender"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Female">Non-binary</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Race field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.race.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.race.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.race.html_name }}"
+              id= "race"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Phone number field -->
+        <div class="md:w-full">
+          <label
+            for="{{ volunteer_form.phone_number.id_for_label }}"
+            class="block text-sm font-normal mb-2"
+            >{{ volunteer_form.phone_number.label }}:
+          </label>
+          <input
+            type="tel"
+            name="{{ volunteer_form.phone_number.html_name }}"
+            id= "phone_number"
+            class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+            required
+          />
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Adress field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.address.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.address.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.address.html_name }}"
+              id= "address"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <!-- Country field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.country.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.country.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.country.html_name }}"
+              id= "country"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+    
+          <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+
+          <!-- Occupation field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ surfer_form.occupation.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.occupation.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.occupation.html_name }}"
+              id= "occupation"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <!-- Offered services field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.offered_services.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.offered_services.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.offered_services.html_name }}"
+              id= "school"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Availablity field -->
+          <div class="md:w-full">
+            <label
+              for="{{ volunteer_form.availablity.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.availablity.label }}:
+            </label>
+            <select
+              name="{{ volunteer_form.availablity.html_name }}"
+              id= "availablity"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            >
+              <option value="">Select availablity</option>
+              <option value="Once a week">Once a week</option>
+              <option value="Twice a week">Twice a week</option>
+              <option value="Three times a week">Three times a week</option>
+              <option value="Four times times a week">Four times times a week</option>
+              <option value="Whenever I am needed">Whenever I am needed</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+        <!-- Extra info field -->
+        <div class="md:w-full">
+        <div class="flex">
+          <label
+            for="{{ volunteer_form.extra_info.id_for_label }}"
+            class="block text-sm font-normal mb-2 w-1/2"
+            >{{ volunteer_form.extra_info.label }}:
+          </label>
+         <div class="w-1/2 flex justify-end">
+              <p class="text-gray-500 text-sm mt-1">0/200</p>
+        </div>
+        </div>
+          <textarea
+            name="{{ volunteer_form.extra_info.html_name }}"
+            id= "extra_info"
+            rows="3"
+            class="border md:w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+            required
+          ></textarea>
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Swim longer than 5 minutes field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.swim_longer_than_5_min.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.swim_longer_than_5_min.label }}:
+            </label>
+            <select
+              name="{{ volunteer_form.swim_longer_than_5_min.html_name }}"
+              id= "swim_longer_than_5_min"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            >
+              <option value="">Select an option</option>
+              <option value="True">Yes</option>
+              <option value="False">No</option>
+            </select>
+            </div>
+            
+
+           <!-- Comfortability in ocean field -->
+<div class="md:w-1/2 px-3 mb-6 md:mb-0">
+  <label for="{{ volunteer_form.comfortability_in_ocean.id_for_label }}" class="block text-sm font-normal mb-2">
+    How comfortable are you in the ocean?
+  </label>
+  <select name="{{ volunteer_form.comfortability_in_ocean.html_name }}" id="comfortability_in_ocean"
+          class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field" required>
+    <option value="">Select an option</option>
+    {% for value, label in volunteer_form.comfortability_in_ocean.field.choices %}
+      <option value="{{ value }}" {% if value == volunteer_form.comfortability_in_ocean.value%}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+</div>
+
+<!-- Medical issues field -->
+        <div class="md:w-full">
+        <div class= "flex">
+          <label
+            for="{{ volunteer_form.medical_issues.id_for_label }}"
+            class="block text-sm font-normal mb-2 w-1/2"
+            >{{ volunteer_form.medical_issues.label }}:
+          </label>
+              <div class="w-1/2 flex justify-end">
+                <p class="text-gray-500 text-sm mt-1">0/200</p>
+              </div>
+          </div>
+          <textarea
+            name="{{ volunteer_form.medical_issues.html_name }}"
+            id= "medical_issues"
+            rows="3"
+            class="border md:w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"          
+            ></textarea>
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Emergency contact first name field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.emergency_contact_first_name.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.emergency_contact_first_name.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.emergency_contact_first_name.html_name }}"
+              id= "emergency_contact_first_name"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <!-- Emergency contact last name field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.emergency_contact_last_name.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.emergency_contact_last_name.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.emergency_contact_last_name.html_name }}"
+              id= "emergency_contact_last_name"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Emergency contact cell field -->
+        <div class="md:w-full">
+          <label
+            for="{{ volunteer_form.emergency_contact_cell.id_for_label }}"
+            class="block text-sm font-normal mb-2"
+            >{{ volunteer_form.emergency_contact_cell.label }}:
+          </label>
+          <input
+            type="tel"
+            name="{{ volunteer_form.emergency_contact_cell.html_name }}"
+            id= "emergency_contact_cell"
+            class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+            required
+          />
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Medical aid field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.medical_aid.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.medical_aid.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.medical_aid.html_name }}"
+              id= "medical_aid"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+
+          <!-- Medical aid number field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.medical_aid_num.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.medical_aid_num.label }}:
+            </label>
+            <input
+              type="text"
+              name="{{ volunteer_form.medical_aid_num.html_name }}"
+              id= "medical_aid_num"
+              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Split box -->
+        <div class="-mx-3 md:flex mb-6">
+          <!-- Accept TandC field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.accept_TandC.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.accept_TandC.label }}:
+            </label>
+            <select
+              name="{{ volunteer_form.accept_TandC.html_name }}"
+              id= "accept_TandC"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            >
+              <option value="">Select an option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <!-- Receive newsletter field -->
+          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+            <label
+              for="{{ volunteer_form.receive_newsletter.id_for_label }}"
+              class="block text-sm font-normal mb-2"
+              >{{ volunteer_form.receive_newsletter.label }}:
+            </label>
+            <select
+              name="{{ volunteer_form.receive_newsletter.html_name }}"
+              id= "receive_newsletter"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              required
+            >
+              <option value="">Select an option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit button -->
+        <div class="mb:w-full">
+          <button
+            type="submit"
+            class="bg-blue-500 hover:bg-blue-700 w-full text-white font-normal py-2 px-4 rounded"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</body>

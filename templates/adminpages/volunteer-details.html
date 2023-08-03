@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name ="viewport" content="width=device-width, intial-scale=1.0">
+    <title>Volunteer Details</title>
+     <!--Importing static page-->
+  {% load static %}
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="{% static 'css/style.css' %}"
+  />
+</head>
+<body>
+  <div class="container mx-auto py-8">
+    <div class="flex justify-center">
+      <h1 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+        Volunteer Details
+      </h1>
+    </div>
+
+    <div class="flex justify-end mb-4">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+        <a href="{% url 'roxy:VolunteerEdit' volunteer.id %}">
+          Edit {{ volunteer.user.first_name }}
+        </a>
+      </button>
+    </div>
+
+    <ul class="w-[40rem] mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <li class="mb-4">
+        <span class="font-semibold">First name:</span> {{ volunteer.user.first_name }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Last name:</span> {{ volunteer.user.last_name }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">UUID:</span> {{ volunteer.id }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Phone:</span> {{ volunteer.phone_number }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Address:</span> {{ volunteer.address }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Country:</span> {{ volunteer.country }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Date of birth:</span> {{ volunteer.DOB }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Gender:</span> {{ volunteer.gender }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Race:</span> {{ volunteer.race }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Medical issues:</span> {{ volunteer.medical_issues }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Occupation:</span> {{ volunteer.occupation }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Offered services:</span> {{ volunteer.offered_services }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Availability:</span> {{ volunteer.availablity }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Extra info:</span> {{ volunteer.extra_info }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Can swim longer than 5 minutes:</span> {{ volunteer.swim_longer_than_5_min }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Comfortability in ocean:</span> {{ volunteer.comfortablity_in_ocean }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Previous volunteer:</span> {{ volunteer.previous_volunteer }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Age:</span> {{ volunteer.age }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Emergency contact first name:</span> {{ volunteer.emergency_contact_first_name }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Emergency contact last name:</span> {{ volunteer.emergency_contact_last_name }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Emergency contact cell:</span> {{ volunteer.emergency_contact_cell }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Medical aid:</span> {{ volunteer.medical_aid }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Medical aid number:</span> {{ volunteer.medical_aid_num }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Receive newsletter:</span> {{ volunteer.receive_newsletter }}
+      </li>
+      <li class="mb-4">
+        <span class="font-semibold">Accept TandC:</span> {{ volunteer.accept_TandC }}
+      </li>
+    </ul>
+  </div>
+</body>
+{% endblock %}
+</html>

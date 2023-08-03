@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container mx-auto py-8">
+  <div class="flex justify-center">
+    <h1 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+      Surfer Details
+    </h1>
+  </div>
+
+
+ <div class="flex justify-between items-center mb-4">
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+      <a href="{% url 'roxy:AdminPage' %}">
+        Back to home
+      </a>
+    </button>
+    
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+      <a href="{% url 'roxy:SurferEdit' surfer.id %}">
+        Edit {{ surfer.user.first_name }}
+      </a>
+    </button>
+</div>
+
+
+
+  <ul class="w-[40rem] mx-auto bg-white shadow-md rounded px-8 py-6 mb-4">
+    <li class="mb-4">
+      <span class="font-semibold">First name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.user.first_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Last Name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.user.last_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">UUID:</span>&nbsp;&nbsp;&nbsp;{{ surfer.id }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Phone Number:</span>&nbsp;&nbsp;&nbsp;{{ surfer.phone_number }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Address:</span>&nbsp;&nbsp;&nbsp;{{ surfer.address }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Country:</span>&nbsp;&nbsp;&nbsp;{{ surfer.country }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Date of Birth:</span>&nbsp;&nbsp;&nbsp;{{ surfer.DOB }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Onset of Condition:</span>&nbsp;&nbsp;&nbsp;{{ surfer.onset_of_condition }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Gender:</span>&nbsp;&nbsp;&nbsp;{{ surfer.gender }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Race:</span>&nbsp;&nbsp;&nbsp;{{ surfer.race }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Medical Issues:</span>&nbsp;&nbsp;&nbsp;{{ surfer.medical_issues }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Occupation:</span>&nbsp;&nbsp;&nbsp;{{ surfer.occupation }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">School:</span>&nbsp;&nbsp;&nbsp;{{ surfer.school }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Diagnosis and Needs:</span>&nbsp;&nbsp;&nbsp;{{ surfer.diagnosis_and_needs }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Medication:</span>&nbsp;&nbsp;&nbsp;{{ surfer.medication }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Extra Info:</span>&nbsp;&nbsp;&nbsp;{{ surfer.extra_info }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Can Swim Longer than 5 min?:</span>&nbsp;&nbsp;&nbsp;{{ surfer.swim_longer_than_5_min }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Comfortablity in Ocean:</span>&nbsp;&nbsp;&nbsp;{{ surfer.comfortablity_in_ocean }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Age:</span>&nbsp;&nbsp;&nbsp;{{ surfer.age }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Emergency Contact First Name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.emergency_contact_first_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Emergency Contact Last Name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.emergency_contact_last_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Emergency Contact Cell:</span>&nbsp;&nbsp;&nbsp;{{ surfer.emergency_contact_cell }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Doctor First Name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.dr_first_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Doctor Last Name:</span>&nbsp;&nbsp;&nbsp;{{ surfer.dr_last_name }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Doctor Cell:</span>&nbsp;&nbsp;&nbsp;{{ surfer.dr_cell }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Medical Aid:</span>&nbsp;&nbsp;&nbsp;{{ surfer.medical_aid }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Medical Aid Number:</span>&nbsp;&nbsp;&nbsp;{{ surfer.medical_aid_num }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Receive Newsletter:</span>&nbsp;&nbsp;&nbsp;{{ surfer.receive_newsletter }}
+    </li>
+    <li class="mb-4">
+      <span class="font-semibold">Accept TandC:</span>&nbsp;&nbsp;&nbsp;{{ surfer.accept_TandC }}
+    </li>
+  </ul>
+
+</div>
+
+{% endblock %}

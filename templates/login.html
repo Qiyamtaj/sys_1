@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <link href="{% static 'src/output.css' %}" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Form</title>
+  <style>
+    /* Add custom CSS styles */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    
+  </style>
+</head>
+<body class="bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500">
+{% include 'include/messages.html' %}
+
+<form method="post" action="{% url 'roxy:LoginRequest' %}">
+    {% csrf_token %}
+    <!-- User Login Form -->
+    <div class="container bg-white shadow-md rounded p-10">
+      <div class="px-8 pt-6 pb-10 mb-4 my-2">
+        <h1 class="mb-4 text-center">Welcome Back!</h1>
+        <!-- Email field -->
+        <div class="md:w-full">
+          <label for="{{ Loginform.email.id_for_label }}" class="block md:w-full text-xs font-thin">{{ Loginform.email.label }}:</label>
+          <input type="email" name="{{ Loginform.email.html_name }}" id="email" class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field" placeholder="youremail@example.com" required />
+        </div>
+
+        <!-- Password fields -->
+        <div class="md:w-full">
+            <label for="{{ Loginform.password.id_for_label }}" class="block text-xs font-thin mb-2">{{ Loginform.password.label }}:</label>
+            <input type="password" name="{{ Loginform.password.html_name }}" id="password" class="border border-gray-300 rounded px-4 py-2 mb-4 input-field" required />
+          </div>
+
+          <!-- Submit button -->
+        <div class="text-center">
+          <button
+            type="submit"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mb-4 rounded-full">
+            Login
+          </button>
+          
+        </div>
+      </div>
+    </div>
+  </form>  
+</body>
+</html>

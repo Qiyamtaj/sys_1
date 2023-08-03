@@ -1,0 +1,6 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "workbench.colorTheme": "Dracula Soft",
+    "github.copilot-labs.showBrushesLenses": true,
+    "github.copilot-labs.showTestGenerationLenses": true
+}

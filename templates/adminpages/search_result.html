@@ -1,0 +1,15 @@
+<form method="GET">
+  <div class="flex justify-center">
+    <input class="w-5/12 px-2 rounded-l-lg" type="text" name="q" id="searchInput" value="{{ query }}" placeholder="Search" />
+
+    <!-- Additional search fields for advanced search -->
+    <input class="w-1/12 px-2" type="text" name="race" placeholder="Race" />
+    <input class="w-1/12 px-2" type="text" name="gender" placeholder="Gender" />
+    <input class="w-1/12 px-2" type="number" name="age" placeholder="Age" />
+    <!-- Add more fields for Disability, Occupation, Hours, Training attendance, etc. -->
+
+    <button class="w-1/12 bg-blue-600 hover:bg-blue-700 text-white rounded-r-lg" type="submit">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>

@@ -1,0 +1,357 @@
+from calendar import HTMLCalendar
+from django.http import JsonResponse
+from django.views.generic.edit import FormView
+from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.shortcuts import render, redirect
+from .forms import *
+from .models import *
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.db.models import Q
+from django.db import IntegrityError, transaction
+from django.urls import reverse
+import openpyxl
+from django.core.exceptions import ObjectDoesNotExist
+from openpyxl import Workbook
+from django.http import HttpResponse
+
+# Homepage
+def homepage(request):
+    return render(request, 'homepage.html')
+
+
+# User + Surfer Create Form
+def UserCreate_Surfer(request):
+    if request.method == 'POST':
+        user_form = UserCreationForm(request.POST)
+        surfer_form = SurferForm(request.POST)
+
+        if user_form.is_valid() and surfer_form.is_valid():
+            try:
+                with transaction.atomic():  # ensures this is an atomic operation
+                    user = user_form.save()
+
+                    surfer_form = surfer_form.save(commit=False)
+                    surfer_form.user = user
+                    surfer_form.first_name = user.first_name  # Set fields before saving
+                    surfer_form.last_name = user.last_name
+
+                    surfer_form.save()
+                return redirect('roxy:LoginRequest')
+
+            except IntegrityError:  # exception for database errors
+                user_form.add_error(None, 'There was a problem saving your details. Please try again.')
+                # add any other exception types here as needed
+            except Exception as e:  # general exception
+                user_form.add_error(None, 'An unknown error occurred. Please try again.')
+                # it would also be a good idea to log this error for your records
+                print(str(e))
+       
+    else:
+        user_form = UserCreationForm()
+        surfer_form = SurferForm({'role':'Surfer'})
+
+    return render(request, 'surferpages/become-a-surfer.html', {
+        'user_form': user_form,
+        'surfer_form': surfer_form
+    })
+
+
+
+
+# User + Volunteer Create Form
+def UserCreate_Volunteer(request):
+    if request.method == 'POST':
+        user_form = UserCreationForm(request.POST)
+        volunteer_form = VolunteerForm(request.POST)
+
+        if user_form.is_valid() and volunteer_form.is_valid():
+            try:
+                with transaction.atomic():  # ensures this is an atomic operation
+                    user = user_form.save()
+
+                    volunteer_form = volunteer_form.save(commit=False)
+                    volunteer_form.user = user
+                    volunteer_form.first_name = user.first_name  # Set fields before saving
+                    volunteer_form.last_name = user.last_name
+
+                    volunteer_form.save()
+                return redirect('roxy:LoginRequest')
+
+            except IntegrityError:  # exception for database errors
+                user_form.add_error(None, 'There was a problem saving your details. Please try again.')
+                # add any other exception types here as needed
+            except Exception as e:  # general exception
+                user_form.add_error(None, 'An unknown error occurred. Please try again.')
+                # it would also be a good idea to log this error for your records
+                print(str(e))
+       
+    else:
+        user_form = UserCreationForm()
+        volunteer_form = VolunteerForm({'role':'Volunteer'})
+
+    return render(request, 'volunteerpages/become-a-volunteer.html', {
+        'user_form': user_form,
+        'volunteer_form': volunteer_form
+    })
+
+
+# Login function
+def LoginRequest(request):
+        context = {
+            "Loginform": LoginForm()
+        }
+        username = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        # if user is not None:
+        #     login(request, user)
+        #     messages.success(request, 'logged in')
+        #     if request.user.role == 'Volunteer':
+        #         return redirect('roxy:VolunteerPage')
+        #     if request.user.role == 'Surfer':
+        #         return redirect('roxy:SurferPage')
+        if user is not None and user.is_authenticated and user.is_admin:
+            login(request, user)
+            return redirect('roxy:AdminPage')
+        else:
+            messages.error(request, 'Login incorrect')
+            return render(request, "login.html", context)
+
+
+# Logout view
+@login_required
+def custom_logout(request):
+    logout(request)
+    messages.info(request, "Logged out successfully!")
+    return redirect("homepage")
+
+# Surfer page view
+@login_required
+def SurferPage(request):
+    return render(request, "surferpages/surferpage.html",)
+
+# Volunteer page view
+@login_required
+def VolunteerPage(request):
+    return render(request,"volunteerpages/volunteerpage.html")
+
+@login_required
+def AdminPage(request):
+    if not request.user.is_admin:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    # Get the search query from the request
+    query = request.GET.get('q')
+
+    # Filter the surfers and volunteers based on the search query
+    if query:
+        search = query.replace(" ", "")
+        surfers = Surfer.objects.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__email__icontains=search)
+        )
+        volunteers = Volunteer.objects.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__email__icontains=search)
+        )
+    else:
+        surfers = Surfer.objects.all()
+        volunteers = Volunteer.objects.all()
+
+    users = User.objects.all()
+
+    # Modify the query variable to display blank if it's None
+    query = query if query else ""
+
+    context = {
+        "users": users,
+        "surfers": surfers,
+        "volunteers": volunteers,
+        "query": query
+    }
+    return render(request, "adminpages/admin-home.html", context)
+
+
+
+
+# Surfer details 
+@login_required
+def SurferDetails(request, pk):
+    surfer = Surfer.objects.get(id=pk)
+    context = {
+        'surfer': surfer,
+    }
+    return render(request, 'adminpages/surfer-details.html', context)
+
+# Volunteer details
+@login_required
+def VolunteerDetails(request, pk):
+    volunteer = Volunteer.objects.get(id=pk)
+    context = {
+        'volunteer': volunteer,
+    }
+    return render(request, 'adminpages/volunteer-details.html', context)
+
+
+
+# Surfer Edit
+@login_required
+def SurferEdit(request, pk):
+    surfer = Surfer.objects.get(email=pk)
+    email = surfer.email
+    user = User.objects.get(email=email)
+
+    user_form = UserChangeForm(instance=user)
+    surfer_form = SurferForm(instance=surfer)
+
+    context = {
+        "user_form": user_form,
+        "surfer_form": surfer_form,
+        }
+
+    if request.method == "POST":
+        user_form = UserChangeForm(request.POST, instance=user)
+        surfer_form = SurferForm(request.POST, instance=surfer)
+
+
+        if user_form.is_valid() and surfer_form.is_valid():
+
+            surfer.first_name = user_form.cleaned_data['first_name']
+            surfer.last_name = user_form.cleaned_data['last_name']
+            surfer.email = user_form.cleaned_data['email']
+
+            # nesting if statment to make sure user first name and volunteer/surfer first
+            # name is saved in both databases
+            if surfer_form.is_valid():
+                user_form.save()
+                surfer_form.save()
+            
+            # this will direct to the volunteer/surfer detail view
+            return redirect(reverse('roxy:SurferDetails', args=[surfer.pk]))
+        
+    return render(request, 'adminpages/surfer-edit.html', context)
+
+
+                                                              
+# Volunteer Edit
+@login_required
+def VolunteerEdit(request, pk):
+    volunteer = Volunteer.objects.get(email=pk)
+    email = volunteer.email
+    user = User.objects.get(email=email)
+
+    user_form = UserChangeForm(instance=user)
+    volunteer_form = VolunteerForm(instance=volunteer)
+
+    context = {
+        "user_form": user_form,
+        "volunteer_form": volunteer_form,
+        }
+
+    if request.method == "POST":
+        user_form = UserChangeForm(request.POST, instance=user)
+        volunteer_form = VolunteerForm(request.POST, instance=volunteer)
+
+
+        if user_form.is_valid() and volunteer_form.is_valid():
+
+            volunteer.first_name = user_form.cleaned_data['first_name']
+            volunteer.last_name = user_form.cleaned_data['last_name']
+            volunteer.email = user_form.cleaned_data['email']
+
+            # nesting if statment to make sure user first name and volunteer/surfer first
+            # name is saved in both databases
+            if volunteer_form.is_valid():
+                user_form.save()
+                volunteer_form.save()
+            
+            # this will direct to the volunteer/surfer detail view
+            return redirect(reverse('roxy:VolunteerDetails', args=[volunteer.pk]))
+        
+    return render(request, 'adminpages/volunteer-edit.html', context)
+
+
+
+#calendar_view
+def calendar_view(request):
+    events = Event.objects.all()
+    return render(request, 'adminpages/calendar.html', {'events': events})
+
+#add_event
+def add_event(request): 
+    context = {
+        'add_event_form' : EventForm()
+        }
+    
+    if request.method == 'POST':
+        add_event_form = EventForm(request.POST)
+        if add_event_form.is_valid():
+            add_event_form.save()
+            return redirect('roxy:Calendar')
+
+    return render(request, 'adminpages/add-event.html', context)
+
+
+def advanced_search(request):
+    # Retrieve query parameters from the request
+    param_names = [
+        'q', 'race', 'gender', 'age_min', 'age_max', 'occupation', 'hours_min', 'hours_max', 'attendance',
+        'disability', 'role'
+    ]
+
+    params = {name: request.GET.get(name, '') for name in param_names}
+
+    # Apply the filters based on the query parameters
+    # Initialize volunteers and surfers with all entries
+    volunteers = Volunteer.objects.all()
+    surfers = Surfer.objects.all()
+
+    if params['q']:
+        query = params['q'].replace(" ", "")
+        volunteers = volunteers.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+        surfers = surfers.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+
+    if params['race']:
+        volunteers = volunteers.filter(race__icontains=params['race'])
+        surfers = surfers.filter(race__icontains=params['race'])
+
+    if params['gender']:
+        volunteers = volunteers.filter(gender__icontains=params['gender'])
+        surfers = surfers.filter(gender__icontains=params['gender'])
+
+    if params['age_min'] and params['age_max']:
+        volunteers = volunteers.filter(age__gte=int(params['age_min']), age__lte=int(params['age_max']))
+        surfers = surfers.filter(age__gte=int(params['age_min']), age__lte=int(params['age_max']))
+
+    if params['occupation']:
+        volunteers = volunteers.filter(occupation__icontains=params['occupation'])
+        surfers = surfers.filter(occupation__icontains=params['occupation'])
+
+    if params['hours_min'] and params['hours_max']:
+        volunteers = volunteers.filter(hours__gte=int(params['hours_min']), hours__lte=int(params['hours_max']))
+
+    if params['attendance']:
+        volunteers = volunteers.filter(attendance=int(params['attendance']))
+
+    if params['disability']:
+        surfers = surfers.filter(disability__icontains=params['disability'])
+
+    if params['role']:
+        volunteers = volunteers.filter(role__icontains=params['role'])
+        surfers = surfers.filter(role__icontains=params['role'])
+
+    context = {
+        **params,
+        'volunteers': volunteers,
+        'surfers': surfers,
+    }
+
+    return render(request, 'adminpages/advanced_search.html', context)
+
+
+
+

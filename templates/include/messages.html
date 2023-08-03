@@ -1,0 +1,17 @@
+{% if messages %}
+  <div id="error-message" class="fixed top-0 m-4 justify-center">
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3  rounded">
+      <ul>
+        {% for message in messages %}
+          <li class="mb-1">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <script>
+    const errorMessage = document.getElementById('error-message');
+    errorMessage.addEventListener('click', () => {
+      errorMessage.remove();
+    });
+  </script>
+{% endif %}

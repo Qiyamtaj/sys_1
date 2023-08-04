@@ -1,8 +1,11 @@
 from calendar import HTMLCalendar
+import io
+import json
 from django.http import JsonResponse
 from django.views.generic.edit import FormView
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render, redirect
+from openpyxl import Workbook
 from .forms import *
 from .models import *
 from django.contrib.auth.decorators import login_required
@@ -11,9 +14,9 @@ from django.contrib import messages
 from django.db.models import Q
 from django.db import IntegrityError, transaction
 from django.urls import reverse
-import openpyxl
+import csv
+import pandas as pd
 from django.core.exceptions import ObjectDoesNotExist
-from openpyxl import Workbook
 from django.http import HttpResponse
 
 # Homepage
@@ -298,6 +301,26 @@ def add_event(request):
 
 def advanced_search(request):
     # Retrieve query parameters from the request
+    if request.method == 'POST':
+        selected_users = request.POST.getlist('selected_users')
+
+        # Add the selected users to the session
+        if 'selected_users' in request.session:
+            # Here, we are converting session data into set to avoid duplicate entries and then back to list
+            request.session['selected_users'] = list(set(request.session['selected_users']).union(selected_users))
+        else:
+            request.session['selected_users'] = selected_users
+
+        request.session.modified = True  # Ensure the session is saved
+
+        # Add the selected users to the session
+        if 'selected_users' in request.session:
+            request.session['selected_users'].extend(selected_users)
+        else:
+            request.session['selected_users'] = selected_users
+
+        request.session.modified = True  # Ensure the session is saved
+    
     param_names = [
         'q', 'race', 'gender', 'age_min', 'age_max', 'occupation', 'hours_min', 'hours_max', 'attendance',
         'disability', 'role'
@@ -352,6 +375,85 @@ def advanced_search(request):
 
     return render(request, 'adminpages/advanced_search.html', context)
 
+# Export to CSV
+def export_excel(request):
+    
+    if request.method == 'POST':
+         selected_users_ids = request.session.get('selected_users', [])
+
+    print(f'Selected users:{selected_users_ids}')
+
+    # filter out any empty strings
+    selected_users_ids = [id for id in selected_users_ids if id]
+
+    # Select only the users whose IDs were passed in the POST request
+    volunteers = Volunteer.objects.none() # define an empty QuerySet as default
+    surfers = Surfer.objects.none() # define an empty QuerySet as default
+
+    # create a workbook
+    wb = Workbook()
+    ws = wb.active
+
+    # write the header
+    ws.append(['First Name', 'Last Name', 'Gender', 'Age', 'Occupation', 'Disability', 'Role', 'Attendance', 'Hours'])
+
+    # get volunteers and surfers by selected user ids
+    volunteers = Volunteer.objects.filter(id__in=selected_users_ids)
+    surfers = Surfer.objects.filter(id__in=selected_users_ids)
 
 
+
+    # write volunteer rows
+    for volunteer in volunteers:
+        ws.append([
+            volunteer.user.first_name,
+            volunteer.user.last_name,
+            volunteer.gender,
+            volunteer.age,
+            volunteer.occupation,
+            '-',  # not sure about the disability field
+            volunteer.role,
+            volunteer.attendance,
+            volunteer.hours,
+        ])
+
+    # write surfer rows
+    for surfer in surfers:
+        ws.append([
+            surfer.user.first_name,
+            surfer.user.last_name,
+            surfer.gender,
+            surfer.age,
+            surfer.occupation,
+            surfer.disability,
+            surfer.role,
+            surfer.attendance,
+            surfer.hours,
+        ])
+
+    # Create response with excel data
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=selected_users.xlsx'
+    wb.save(response)
+
+      # Clear the selected users from the session after exporting
+    if 'selected_users' in request.session:
+        del request.session['selected_users']
+
+    return response
+ 
+# Storing selected users in session
+def store_selected_users(request):
+    if request.method == 'POST':
+        selected_users = request.POST.getlist('selected_users')
+
+        # Add the selected users to the session
+        if 'selected_users' in request.session:
+            request.session['selected_users'].extend(selected_users)
+        else:
+            request.session['selected_users'] = selected_users
+
+        request.session.modified = True  # Ensure the session is saved
+
+    return HttpResponse(status=204)  # return a 'no content' response
 

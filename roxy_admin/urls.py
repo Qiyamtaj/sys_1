@@ -33,7 +33,7 @@ urlpatterns = [
     path("search/", views.advanced_search, name="Adv_search"),
 
     # Export Paths
-    # path('add_to_selection/', views.add_to_selection, name='add_to_selection'),
-    # path('export_to_excel/', views.export_to_excel, name='export_to_excel'),
-    # path("display_users/", views.display_users, name="display_users"),
+    path('export_to_excel/', views.export_excel, name='ExportExcel'),
+    path('store_selected_users/', views.store_selected_users, name='StoreSelectedUsers'),
+
 ]

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     'livereload',  # livereload
+    'corsheaders', # cross origin resource sharing
     'livereload.server',
     "django.contrib.staticfiles",
     "roxy_admin",  # roxy_app
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "livereload.middleware.LiveReloadScript",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,6 +59,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "roxy_sys.urls"
+
+CORS_ALLOW_ALL_ORIGINS = True  # If you want to allow all origins
+# !! In production you must use only trrusted domians !! 
+
 
 TEMPLATES = [
     {

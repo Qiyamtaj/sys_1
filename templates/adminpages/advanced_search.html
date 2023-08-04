@@ -67,8 +67,9 @@
             </thead>
 
             <tbody>
-            <form method="GET" action="{% url 'roxy:Adv_search' %}" id="userSelectForm">
-              <input type="hidden" id="addSelectedFlag" name="add_selected" value="" />
+            <form method="POST" action="{% url 'roxy:StoreSelectedUsers' %}" id="userSelectForm">
+              {% csrf_token %}
+
               {% for volunteer in volunteers %}
               <tr class="border-b border-neutral-500">
                 <td class="whitespace-nowrap px-6 py-4">{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</td>
@@ -109,9 +110,16 @@
                 </tr>
               </tr>
               {% endfor %}
-              <button type="submit" name="add_selected">Add Selected Users</button>
-              </form>
 
+              <button type="submit" name="add_selected" class="text-white bg-green-400">Add Selected Users</button>
+              
+            </form>
+
+            <form method="POST" action="{% url 'roxy:ExportExcel' %}" id="userSelectForm">
+            {% csrf_token %}
+            <button type="submit" name="export_to_excel" class="text-white bg-green-400">Export Selected Users to Excel</button>
+            </form>
+            
             </tbody>
           </table>
          
@@ -153,20 +161,28 @@ function resetForm(event) {
     console.log("resetForm completed");
 }
 
+
   function addSelectedUsers() {
     console.log("addSelectedUsers triggered");
-    // Find all checked checkboxes with name "selected_users"
+
     const checkboxes = document.querySelectorAll('input[name="selected_users"]:checked');
-    // Get an array of selected user IDs
     const selectedUserIds = Array.from(checkboxes).map((checkbox) => checkbox.value);
-    // Set the selected user IDs in the hidden input field value
-    document.getElementById('selectedUsersIds').value = selectedUserIds.join(',');
-    // Set the "add_selected" flag
-    document.getElementById('addSelectedFlag').value = "1";
-    // Submit the form
-    document.getElementById('userSelectForm').submit();
+    const hiddenField = document.getElementById('selectedUsersIds');
+    
+    if (hiddenField) {
+      hiddenField.value = selectedUserIds.join(',');
+    }
+
     console.log("addSelectedUsers completed");
   }
+
+  const userSelectForm = document.getElementById('userSelectForm');
+
+  if (userSelectForm) {
+    userSelectForm.addEventListener('submit', addSelectedUsers);
+  }
+
+
 </script>
 {% endblock %}
 

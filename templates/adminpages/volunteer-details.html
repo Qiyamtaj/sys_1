@@ -22,13 +22,19 @@
       </h1>
     </div>
 
-    <div class="flex justify-end mb-4">
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-        <a href="{% url 'roxy:VolunteerEdit' volunteer.id %}">
-          Edit {{ volunteer.user.first_name }}
-        </a>
-      </button>
-    </div>
+ <div class="flex justify-between items-center mb-4">
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+      <a href="{% url 'roxy:AdminPage' %}">
+        Back to home
+      </a>
+    </button>
+    
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+      <a href="{% url 'roxy:VolunteerEdit' volunteer.id %}">
+        Edit {{ volunteer.user.first_name }}
+      </a>
+    </button>
+</div>
 
     <ul class="w-[40rem] mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
       <li class="mb-4">

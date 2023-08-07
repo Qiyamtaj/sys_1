@@ -1,24 +1,53 @@
-{% extends "header.html" %} {% block content %}
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, intial-scale=1.0" />
-    <title>Volunteer Edit</title>
-    <!--Importing static page-->
-    {% load static %}
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{% static 'css/style.css' %}"
-    />
-  </head>
-  <body>
-    {% include "navbar.html" %}
-    <h2>Edit {{volunteer.first_name}}</h2>
-    <form method="post">
-      {% csrf_token %} {{ user_form.as_p }} {{ volunteer_form.as_p }} 
-      <button type="submit">Save Changes</button>
-    </form>
-  </body>
-  {% endblock %}
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+  <meta charset="UTF-8">
+  <meta name ="viewport" content="width=device-width, intial-scale=1.0">
+  <title>Edit Volunteer Details</title>
+   <!--Importing static page-->
+  {% load static %}
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="{% static 'css/style.css' %}"
+  />
+</head>
+<body>
+  <div class="container mx-auto py-8">
+    <div class="flex justify-center">
+      <h1 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">
+        Edit Volunteer Details
+      </h1>
+    </div>
+
+    <div class="flex justify-between items-center mb-4">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+        <a href="{% url 'roxy:AdminPage' %}">
+          Back to home
+        </a>
+      </button>
+    </div>
+
+    <div class="w-[40rem] mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {% for field in user_form %}
+          <div>
+            <label class="font-semibold" for="{{ field.id_for_label }}">{{ field.label }}:</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+        {% for field in volunteer_form %}
+          <div>
+            <label class="font-semibold" for="{{ field.id_for_label }}">{{ field.label }}:</label>
+            {{ field }}
+          </div>
+        {% endfor %}
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded" type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</body>
+{% endblock %}

@@ -107,7 +107,6 @@ class SurferForm(forms.ModelForm):
     class Meta:
         model = Surfer
         fields = (
-            'age',
             'phone_number',
             'address',
             'country',
@@ -154,7 +153,6 @@ class VolunteerForm(forms.ModelForm):
             model = Volunteer
             # specifying which model we are working with
             fields = (
-                'age',
                 'phone_number',
                 'address',
                 'country',

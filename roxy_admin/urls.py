@@ -31,9 +31,11 @@ urlpatterns = [
     path("add_event/", views.add_event, name="AddEvent"),
     # Adv Search Paths
     path("search/", views.advanced_search, name="Adv_search"),
-
     # Export Paths
     path('export_to_excel/', views.export_excel, name='ExportExcel'),
     path('store_selected_users/', views.store_selected_users, name='StoreSelectedUsers'),
+    # QR Code Paths
+    path('qrscanner/', views.QRScannerView, name='QR_Scanner'),
+    path('startendtracking/', views.StartEndTracking , name='StartEndTracking')
 
 ]

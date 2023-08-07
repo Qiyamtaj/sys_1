@@ -2,10 +2,14 @@
 Models module for user, volunteer and surfer models
 """
 
+from datetime import date
 from django.db import models
 import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-
+import qrcode
+from django.core.files.base import ContentFile
+from django.core.files import File
+from io import BytesIO
 
 class UserManager(BaseUserManager):
     """
@@ -88,6 +92,12 @@ class Volunteer(models.Model):
     address = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
     DOB = models.DateField()
+
+    @property
+    def age(self):
+        today = date.today()
+        return today.year - self.DOB.year - ((today.month, today.day) < (self.DOB.month, self.DOB.day))
+    
     gender = models.CharField(max_length=100)
     race = models.CharField(max_length=100)
     hours = models.IntegerField(default=0)
@@ -101,7 +111,6 @@ class Volunteer(models.Model):
     swim_longer_than_5_min = models.BooleanField()
     comfortablity_in_ocean = models.CharField(max_length=100)
     previous_volunteer = models.BooleanField()
-    age = models.PositiveIntegerField()
     emergency_contact_first_name = models.CharField(max_length=100)
     emergency_contact_last_name = models.CharField(max_length=100)
     emergency_contact_cell = models.CharField(max_length=100)
@@ -109,6 +118,27 @@ class Volunteer(models.Model):
     medical_aid_num = models.CharField(max_length=100)
     receive_newsletter = models.CharField(max_length=3)
     accept_TandC = models.CharField(max_length=3)
+    qr_code = models.ImageField(upload_to='qrcodes', blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.qr_code:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(str(self.id)) # add user's uuid here
+            qr.make(fit=True)
+
+            img = qr.make_image(fill='black', back_color='white')
+
+            temp_handle = BytesIO()
+            img.save(temp_handle, 'PNG')
+            temp_handle.seek(0)
+            self.qr_code.save(f'{self.id}.png', ContentFile(temp_handle.read()), save=False)
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """
@@ -125,6 +155,12 @@ class Surfer(models.Model):
     address = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
     DOB = models.DateField()
+    
+    @property
+    def age(self):
+        today = date.today()
+        return today.year - self.DOB.year - ((today.month, today.day) < (self.DOB.month, self.DOB.day))
+    
     onset_of_condition = models.DateField()
     gender = models.CharField(max_length=100)
     race = models.CharField(max_length=100)
@@ -140,7 +176,6 @@ class Surfer(models.Model):
     extra_info = models.CharField(max_length=500)
     swim_longer_than_5_min = models.BooleanField()
     comfortablity_in_ocean = models.CharField(max_length=100)
-    age = models.PositiveIntegerField()
     emergency_contact_first_name = models.CharField(max_length=100)
     emergency_contact_last_name = models.CharField(max_length=100)
     emergency_contact_cell = models.CharField(max_length=100)
@@ -148,6 +183,28 @@ class Surfer(models.Model):
     medical_aid_num = models.CharField(max_length=100)
     receive_newsletter = models.CharField(max_length=3)
     accept_TandC = models.CharField(max_length=3)
+    qr_code = models.ImageField(upload_to='qr_codes', blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.qr_code:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(str(self.id)) # add user's uuid here
+            qr.make(fit=True)
+
+            img = qr.make_image(fill='black', back_color='white')
+
+            temp_handle = BytesIO()
+            img.save(temp_handle, 'PNG')
+            temp_handle.seek(0)
+            self.qr_code.save(f'{self.id}.png', ContentFile(temp_handle.read()), save=False)
+            
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Return string representation of the Surfer object."""

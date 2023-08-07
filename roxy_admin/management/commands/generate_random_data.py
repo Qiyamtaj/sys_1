@@ -87,3 +87,5 @@ class Command(BaseCommand):
                     receive_newsletter=choice(['Yes', 'No']),
                     accept_TandC=choice(['Yes', 'No']),
                 )
+            
+            self.stdout.write(self.style.SUCCESS(f'Successfully generated {total} users.'))

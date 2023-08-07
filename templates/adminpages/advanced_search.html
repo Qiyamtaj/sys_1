@@ -5,6 +5,7 @@
 
 <head>
   <title>Advanced Search</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 
 <body>
@@ -110,15 +111,15 @@
                 </tr>
               </tr>
               {% endfor %}
-
-              <button type="submit" name="add_selected" class="text-white bg-green-400">Add Selected Users</button>
-              
+              <button type="submit" name="add_selected" class="text-white bg-blue-600 hover:bg-blue-700 rounded-lg p-2 mb-2 mr-1">Add Selected Users to export list</button>
+              <button id="select-all" class="text-white bg-blue-600 hover:bg-blue-700 rounded-lg p-2 mb-2 mr-6">Select All</button>
             </form>
 
             <form method="POST" action="{% url 'roxy:ExportExcel' %}" id="userSelectForm">
             {% csrf_token %}
-            <button type="submit" name="export_to_excel" class="text-white bg-green-400">Export Selected Users to Excel</button>
+            <button type="submit" name="export_to_excel" class="text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg p-2">Export Selected Users to Excel</button>
             </form>
+            
             
             </tbody>
           </table>
@@ -160,6 +161,11 @@ function resetForm(event) {
 
     console.log("resetForm completed");
 }
+
+  $('#select-all').click(function() {
+    $('input[type="checkbox"]').prop('checked', true);
+    console.log('jQuery version:', $().jquery);
+  });
 
 
   function addSelectedUsers() {

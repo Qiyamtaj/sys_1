@@ -7,7 +7,7 @@
 </head>
 
 <body class="bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500">
-  {% include 'include/messages.html' 
+  {% include 'include/messages.html' %}
 
   <form method="post" action="{% url 'roxy:UserCreate_Volunteer' %}">
     {% csrf_token %}
@@ -104,26 +104,8 @@
 
         <!-- Surfer Form -->
 
-        <!-- Split box -->
-        <div class="-mx-3 md:flex mb-6">
-          <!-- Age field -->
-          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
-            <label
-              for="{{ volunteer_form.age.id_for_label }}"
-              class="block text-sm font-normal mb-2"
-              >{{ volunteer_form.age.label }}:
-            </label>
-            <input
-              type="number"
-              name="{{ volunteer_form.age.html_name }}"
-              id= "age"
-              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
-              required
-            />
-          </div>
-
           <!-- DOB field -->
-          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+          <div class="mx-3 md:flex mb-6">
             <label
               for="{{ volunteer_form.DOB.id_for_label }}"
               class="block text-sm font-normal mb-2"

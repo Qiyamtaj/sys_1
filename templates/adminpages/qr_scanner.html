@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <head>
+    <title>QR Scanner</title>
+    <script src="{% static 'jsqr/dist/jsQR.js' %}"></script>
+  </head>
+  <body>
+  <button id="start-tracking">Start Tracking</button>
+  <button id="stop-tracking">Stop Tracking</button>
+
+  {% block scripts %}
+    <video id="preview" style="display:none;"></video>
+    <canvas id="canvas" style="width: 100%;"></canvas>
+    <script type="text/javascript">
+      var video = document.getElementById('preview');
+      video.addEventListener('pause', function() { console.log('Video paused for some reason'); });
+      var canvasElement = document.getElementById('canvas');
+      var canvas = canvasElement.getContext('2d');
+
+      // Get the buttons
+  var startButton = document.getElementById('start-tracking');
+  var stopButton = document.getElementById('stop-tracking');
+
+  // Variable to hold the last scanned QR code data
+  var lastQRCodeData = null;
+
+  // Listen for clicks on the start button
+  startButton.addEventListener('click', function() {
+    handleTimeTrackingRequest('start');
+  });
+
+  // Listen for clicks on the stop button
+  stopButton.addEventListener('click', function() {
+    handleTimeTrackingRequest('stop');
+  });
+
+  // Send a request to the StartEndTracking view
+  function handleTimeTrackingRequest(action) {
+    if (lastQRCodeData === null) {
+      console.log('No QR code has been scanned yet');
+      return;
+    }
+
+    fetch('{{ tracking_action_url }}', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({ action: action, id: lastQRCodeData })
+    })
+    .then(response => response.json())
+    .then(data => console.log(data));
+  }
+    video.onloadedmetadata = function() {
+        video.play();
+        requestAnimationFrame(tick);
+        };
+
+      function drawLine(begin, end, color) {
+        canvas.beginPath();
+        canvas.moveTo(begin.x, begin.y);
+        canvas.lineTo(end.x, end.y);
+        canvas.lineWidth = 4;
+        canvas.strokeStyle = color;
+        canvas.stroke();
+      }
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+        video.srcObject = stream;
+        video.setAttribute('playsinline', true);
+        video.play();
+        requestAnimationFrame(tick);
+      });
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+        var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+        console.log(video.readyState);
+        if (code) {
+        drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+        drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+        drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+        drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+
+        fetch("{% url 'roxy:StartEndTracking' %}", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ qr_code: code.data })
+        })
+        .then(response => response.json())
+        .then(data => console.log(data));
+        }
+    }
+    requestAnimationFrame(tick);
+    
+    if (code) {
+    drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+    drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+    drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+    drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+
+    // Store the QR code data
+    lastQRCodeData = code.data;
+
+    fetch("{{ action_url }}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({ qr_code: code.data })
+    })
+    .then(response => response.json())
+    .then(data => console.log(data));
+  }
+}
+    
+</script>
+{% endblock %}
+
+</body>
+
+{% endblock %}

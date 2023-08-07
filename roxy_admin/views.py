@@ -1,8 +1,8 @@
 from calendar import HTMLCalendar
-import io
+import datetime
 import json
 from django.http import JsonResponse
-from django.views.generic.edit import FormView
+from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from openpyxl import Workbook
@@ -14,8 +14,6 @@ from django.contrib import messages
 from django.db.models import Q
 from django.db import IntegrityError, transaction
 from django.urls import reverse
-import csv
-import pandas as pd
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
@@ -204,11 +202,9 @@ def VolunteerDetails(request, pk):
 # Surfer Edit
 @login_required
 def SurferEdit(request, pk):
-    surfer = Surfer.objects.get(email=pk)
-    email = surfer.email
-    user = User.objects.get(email=email)
+    surfer = Surfer.objects.get(id=pk)
 
-    user_form = UserChangeForm(instance=user)
+    user_form = UserChangeForm(instance=surfer.user)
     surfer_form = SurferForm(instance=surfer)
 
     context = {
@@ -217,22 +213,14 @@ def SurferEdit(request, pk):
         }
 
     if request.method == "POST":
-        user_form = UserChangeForm(request.POST, instance=user)
+        user_form = UserChangeForm(request.POST, instance=surfer.user)
         surfer_form = SurferForm(request.POST, instance=surfer)
 
 
         if user_form.is_valid() and surfer_form.is_valid():
-
-            surfer.first_name = user_form.cleaned_data['first_name']
-            surfer.last_name = user_form.cleaned_data['last_name']
-            surfer.email = user_form.cleaned_data['email']
-
-            # nesting if statment to make sure user first name and volunteer/surfer first
-            # name is saved in both databases
-            if surfer_form.is_valid():
-                user_form.save()
-                surfer_form.save()
-            
+            user_form.save()
+            surfer_form.save()
+        
             # this will direct to the volunteer/surfer detail view
             return redirect(reverse('roxy:SurferDetails', args=[surfer.pk]))
         
@@ -243,11 +231,10 @@ def SurferEdit(request, pk):
 # Volunteer Edit
 @login_required
 def VolunteerEdit(request, pk):
-    volunteer = Volunteer.objects.get(email=pk)
-    email = volunteer.email
-    user = User.objects.get(email=email)
+    volunteer = Volunteer.objects.get(id=pk)
+   
 
-    user_form = UserChangeForm(instance=user)
+    user_form = UserChangeForm(instance=volunteer.user)
     volunteer_form = VolunteerForm(instance=volunteer)
 
     context = {
@@ -256,21 +243,15 @@ def VolunteerEdit(request, pk):
         }
 
     if request.method == "POST":
-        user_form = UserChangeForm(request.POST, instance=user)
+        user_form = UserChangeForm(request.POST, instance=volunteer)
         volunteer_form = VolunteerForm(request.POST, instance=volunteer)
 
 
         if user_form.is_valid() and volunteer_form.is_valid():
 
-            volunteer.first_name = user_form.cleaned_data['first_name']
-            volunteer.last_name = user_form.cleaned_data['last_name']
-            volunteer.email = user_form.cleaned_data['email']
 
-            # nesting if statment to make sure user first name and volunteer/surfer first
-            # name is saved in both databases
-            if volunteer_form.is_valid():
-                user_form.save()
-                volunteer_form.save()
+            user_form.save()
+            volunteer_form.save()
             
             # this will direct to the volunteer/surfer detail view
             return redirect(reverse('roxy:VolunteerDetails', args=[volunteer.pk]))
@@ -343,8 +324,8 @@ def advanced_search(request):
         surfers = surfers.filter(race__icontains=params['race'])
 
     if params['gender']:
-        volunteers = volunteers.filter(gender__icontains=params['gender'])
-        surfers = surfers.filter(gender__icontains=params['gender'])
+        volunteers = volunteers.filter(gender__iexact=params['gender'])
+        surfers = surfers.filter(gender__iexact=params['gender'])
 
     if params['age_min'] and params['age_max']:
         volunteers = volunteers.filter(age__gte=int(params['age_min']), age__lte=int(params['age_max']))
@@ -375,7 +356,7 @@ def advanced_search(request):
 
     return render(request, 'adminpages/advanced_search.html', context)
 
-# Export to CSV
+# Export to Excel
 def export_excel(request):
     
     if request.method == 'POST':
@@ -457,3 +438,49 @@ def store_selected_users(request):
 
     return HttpResponse(status=204)  # return a 'no content' response
 
+def QRScannerView(request):
+    action_url = reverse('roxy:StartEndTracking')
+    return render(request, 'adminpages/qr_scanner.html', {'action_url': action_url})
+
+
+@csrf_exempt
+def StartEndTracking(request):
+    body_unicode = request.body.decode('utf-8')
+    body_data = json.loads(body_unicode)
+
+    action = body_data['action']
+    id = body_data['id']
+
+    surfer = Surfer.objects.filter(id=id).first()
+    volunteer = Volunteer.objects.filter(id=id).first()
+
+    if surfer:
+        return handle_time_tracking(request, surfer, 'surfer_tracking_start_time', action)
+    elif volunteer:
+        return handle_time_tracking(request, volunteer, 'volunteer_tracking_start_time', action)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'No surfer or volunteer found with the provided ID'})
+
+def handle_time_tracking(request, user, session_key, action):
+    if action == 'stop':
+        if session_key in request.session:
+            start_time = datetime.strptime(request.session[session_key], "%m/%d/%Y, %H:%M:%S")
+
+            end_time = datetime.now()
+
+            # Calculate elapsed time in minutes
+            elapsed_time = (end_time - start_time).total_seconds() / 60
+            user.hours += elapsed_time
+
+            user.save()
+
+            # Remove the start time from the session
+            del request.session[session_key]
+
+            return JsonResponse({'status': 'ok', 'message': 'Time tracking ended. Hours updated.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'No start time found.'})
+    else:   # action == 'start'
+        # Start time tracking by storing the current time in the session
+        request.session[session_key] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        return JsonResponse({'status': 'ok', 'message': 'Time tracking started.'})

@@ -70,7 +70,7 @@
 
         <!-- Password fields -->
 
-        <div class="-mx-3 md:flex mb-6">
+        <div class="mx-3 md:flex mb-6">
           <div class="md:w-1/2 px-3 mb-6 md:mb-0">
             <label
               for="{{ user_form.password1.id_for_label }}"
@@ -104,26 +104,8 @@
 
         <!-- Surfer Form -->
 
-        <!-- Split box -->
-        <div class="-mx-3 md:flex mb-6">
-          <!-- Age field -->
-          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
-            <label
-              for="{{ surfer_form.age.id_for_label }}"
-              class="block text-sm font-normal mb-2"
-              >{{ surfer_form.age.label }}:
-            </label>
-            <input
-              type="number"
-              name="{{ surfer_form.age.html_name }}"
-              id= "age"
-              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
-              required
-            />
-          </div>
-
           <!-- DOB field -->
-          <div class="md:w-1/2 px-3 mb-6 md:mb-0">
+          <div class="mx-3 md:flex mb-6">
             <label
               for="{{ surfer_form.DOB.id_for_label }}"
               class="block text-sm font-normal mb-2"

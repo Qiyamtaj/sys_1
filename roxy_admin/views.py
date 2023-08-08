@@ -1,5 +1,5 @@
-from calendar import HTMLCalendar
-import datetime
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -328,8 +328,12 @@ def advanced_search(request):
         surfers = surfers.filter(gender__iexact=params['gender'])
 
     if params['age_min'] and params['age_max']:
-        volunteers = volunteers.filter(age__gte=int(params['age_min']), age__lte=int(params['age_max']))
-        surfers = surfers.filter(age__gte=int(params['age_min']), age__lte=int(params['age_max']))
+        min_dob = date.today() - relativedelta(years=int(params['age_max']))
+        max_dob = date.today() - relativedelta(years=int(params['age_min']))
+
+        volunteers = volunteers.filter(DOB__gte=min_dob, DOB__lte=max_dob)
+        surfers = surfers.filter(DOB__gte=min_dob, DOB__lte=max_dob)
+
 
     if params['occupation']:
         volunteers = volunteers.filter(occupation__icontains=params['occupation'])
@@ -447,30 +451,42 @@ def QRScannerView(request):
 def StartEndTracking(request):
     body_unicode = request.body.decode('utf-8')
     body_data = json.loads(body_unicode)
+    
+    if 'action' not in body_data or 'id' not in body_data:
+        return JsonResponse({'status': 'error', 'message': 'Missing required parameters'})
 
     action = body_data['action']
-    id = body_data['id']
+    qr_code_data = body_data['id']
 
-    surfer = Surfer.objects.filter(id=id).first()
-    volunteer = Volunteer.objects.filter(id=id).first()
+
+    surfer = Surfer.objects.filter(id=qr_code_data).first()
+    volunteer = Volunteer.objects.filter(id=qr_code_data).first()
 
     if surfer:
         return handle_time_tracking(request, surfer, 'surfer_tracking_start_time', action)
+        
     elif volunteer:
         return handle_time_tracking(request, volunteer, 'volunteer_tracking_start_time', action)
     else:
         return JsonResponse({'status': 'error', 'message': 'No surfer or volunteer found with the provided ID'})
 
+
 def handle_time_tracking(request, user, session_key, action):
     if action == 'stop':
+        
         if session_key in request.session:
             start_time = datetime.strptime(request.session[session_key], "%m/%d/%Y, %H:%M:%S")
-
             end_time = datetime.now()
-
-            # Calculate elapsed time in minutes
-            elapsed_time = (end_time - start_time).total_seconds() / 60
-            user.hours += elapsed_time
+            user.is_timing_active = False
+            # Calculate elapsed time in hours
+            elapsed_time = (end_time - start_time).total_seconds() / 3600
+            print(f"Elapsed time in minutes: {elapsed_time}") # Debug statement
+            user.hours += round(elapsed_time, 2)
+            print(f"Updated hours for user {user.id}: {user.hours}") # Debug statement
+            print(f"Attendance without update: {user.attendance}") # Debug statement
+            # Increment the attendance by 1
+            user.attendance += 1
+            print(f"Updated attendance for user {user.id}: {user.attendance}") # Debug statement
 
             user.save()
 
@@ -481,6 +497,32 @@ def handle_time_tracking(request, user, session_key, action):
         else:
             return JsonResponse({'status': 'error', 'message': 'No start time found.'})
     else:   # action == 'start'
+        user.is_timing_active = True
+
         # Start time tracking by storing the current time in the session
         request.session[session_key] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+
+        user.save()  # Don't forget to save the updated user object
+
         return JsonResponse({'status': 'ok', 'message': 'Time tracking started.'})
+    
+# End all sessions
+def EndAllTracking(request):
+    # Authenticate the request to ensure that it's from an authorized source
+    if not request.user.is_admin == True:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    # Find all active Surfer sessions
+    active_surfers = Surfer.objects.filter(is_timing_active=True)
+
+    for surfer in active_surfers:
+        
+        handle_time_tracking(request, surfer, 'surfer_tracking_start_time', 'stop')
+
+    # Find all active Volunteer sessions
+    active_volunteers = Volunteer.objects.filter(is_timing_active=True)
+
+    for volunteer in active_volunteers:
+        handle_time_tracking(request, volunteer, 'volunteer_tracking_start_time', 'stop')
+
+    return JsonResponse({'success': True})

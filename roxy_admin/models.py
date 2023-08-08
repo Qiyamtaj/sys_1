@@ -100,7 +100,7 @@ class Volunteer(models.Model):
     
     gender = models.CharField(max_length=100)
     race = models.CharField(max_length=100)
-    hours = models.IntegerField(default=0)
+    hours = models.FloatField(default=0.0)
     attendance = models.IntegerField(default=0)
     role = models.CharField(max_length=100)
     medical_issues = models.CharField(max_length=1000)
@@ -119,6 +119,7 @@ class Volunteer(models.Model):
     receive_newsletter = models.CharField(max_length=3)
     accept_TandC = models.CharField(max_length=3)
     qr_code = models.ImageField(upload_to='qrcodes', blank=True)
+    is_timing_active = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.qr_code:
@@ -168,7 +169,7 @@ class Surfer(models.Model):
     occupation = models.CharField(max_length=100)
     school = models.CharField(max_length=100)
     diagnosis_and_needs = models.CharField(max_length=1000)
-    hours = models.IntegerField(default=0)
+    hours = models.FloatField(default=0.0)
     attendance = models.IntegerField(default=0)
     role = models.CharField(max_length=100)
     disability = models.CharField(max_length=100)
@@ -184,6 +185,8 @@ class Surfer(models.Model):
     receive_newsletter = models.CharField(max_length=3)
     accept_TandC = models.CharField(max_length=3)
     qr_code = models.ImageField(upload_to='qr_codes', blank=True)
+    is_timing_active = models.BooleanField(default=False)
+
 
     def save(self, *args, **kwargs):
         if not self.qr_code:

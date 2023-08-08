@@ -7,14 +7,20 @@
     <title>QR Scanner</title>
     <script src="{% static 'jsqr/dist/jsQR.js' %}"></script>
   </head>
-  <body>
-  <button id="start-tracking">Start Tracking</button>
-  <button id="stop-tracking">Stop Tracking</button>
+  <body class="flex flex-col items-center justify-center h-screen bg-gray-200">
+    <div class="relative w-96 h-96 mx-auto flex items-center justify-center mt-[80px] mb-5">
+        <video id="preview" class="absolute w-full h-full"></video>
+        <canvas id="canvas" class="absolute w-full h-full"></canvas>
+    </div>
+    <div class="text-center mb-4">
+        <button id="start-tracking" class="px-4 py-4 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue active:bg-blue-800 mr-2">Start Tracking</button>
+        <button id="stop-tracking" class="px-4 py-4 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:border-red-700 focus:shadow-outline-red active:bg-red-800">Stop Tracking</button>
+        <button id="end-all-sessions" class="px-4 py-4 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:border-orange-700 focus:shadow-outline-orange active:bg-orange-800">End All Sessions</button>
+    </div>
 
   {% block scripts %}
-    <video id="preview" style="display:none;"></video>
-    <canvas id="canvas" style="width: 100%;"></canvas>
     <script type="text/javascript">
+      var endAllTrackingURL = "{% url 'roxy_admin:EndAllTracking' %}";
       var video = document.getElementById('preview');
       video.addEventListener('pause', function() { console.log('Video paused for some reason'); });
       var canvasElement = document.getElementById('canvas');
@@ -32,6 +38,29 @@
     handleTimeTrackingRequest('start');
   });
 
+var endAllSessionsButton = document.getElementById('end-all-sessions');
+endAllSessionsButton.addEventListener('click', function() {
+  var confirmAction = confirm("Are you sure you want to end all sessions?");
+  if (confirmAction) {
+    endAllSessionsRequest();
+  } else {
+    console.log("End All Sessions action was cancelled");
+  }
+});
+
+function endAllSessionsRequest() {
+  fetch(endAllTrackingURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "{{ csrf_token }}"
+    }
+  })
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.log('Error:', error));
+}
+
   // Listen for clicks on the stop button
   stopButton.addEventListener('click', function() {
     handleTimeTrackingRequest('stop');
@@ -40,21 +69,21 @@
   // Send a request to the StartEndTracking view
   function handleTimeTrackingRequest(action) {
     if (lastQRCodeData === null) {
-      console.log('No QR code has been scanned yet');
-      return;
-    }
-
-    fetch('{{ tracking_action_url }}', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}"
-      },
-      body: JSON.stringify({ action: action, id: lastQRCodeData })
-    })
-    .then(response => response.json())
-    .then(data => console.log(data));
+    console.log('No QR code has been scanned yet');
+    return;
   }
+  fetch('{{ action_url }}', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "{{ csrf_token }}"
+    },
+    body: JSON.stringify({ action: action, id: lastQRCodeData })
+  })
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.log('Error:', error)); // This will log errors like the SyntaxError
+}
     video.onloadedmetadata = function() {
         video.play();
         requestAnimationFrame(tick);
@@ -75,56 +104,33 @@
         video.play();
         requestAnimationFrame(tick);
       });
-      function tick() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvasElement.height = video.videoHeight;
-        canvasElement.width = video.videoWidth;
-        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-        var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-        var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-        console.log(video.readyState);
-        if (code) {
-        drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
-        drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
-        drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
-        drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
 
-        fetch("{% url 'roxy:StartEndTracking' %}", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: JSON.stringify({ qr_code: code.data })
-        })
-        .then(response => response.json())
-        .then(data => console.log(data));
-        }
-    }
-    requestAnimationFrame(tick);
-    
+function tick() {
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvasElement.height = video.videoHeight;
+    canvasElement.width = video.videoWidth;
+    canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+    var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+    var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+
     if (code) {
-    drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
-    drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
-    drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
-    drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+      drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+      drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+      drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+      drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
 
-    // Store the QR code data
-    lastQRCodeData = code.data;
+      // Store the QR code data
+      lastQRCodeData = code.data;
 
-    fetch("{{ action_url }}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}"
-      },
-      body: JSON.stringify({ qr_code: code.data })
-    })
-    .then(response => response.json())
-    .then(data => console.log(data));
+      const requestBody = JSON.stringify({ qr_code: code.data });
+      console.log('Request body:', requestBody);
+    }
+
+    requestAnimationFrame(tick);
   }
 }
-    
+
+ 
 </script>
 {% endblock %}
 

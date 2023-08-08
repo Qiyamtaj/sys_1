@@ -36,6 +36,7 @@ urlpatterns = [
     path('store_selected_users/', views.store_selected_users, name='StoreSelectedUsers'),
     # QR Code Paths
     path('qrscanner/', views.QRScannerView, name='QR_Scanner'),
-    path('startendtracking/', views.StartEndTracking , name='StartEndTracking')
+    path('startendtracking/', views.StartEndTracking , name='StartEndTracking'),
+    path('endalltracking/', views.EndAllTracking , name='EndAllTracking'),
 
 ]

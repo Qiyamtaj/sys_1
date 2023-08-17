@@ -16,6 +16,8 @@ from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
+from django.utils import timezone
+
 
 # Homepage
 def homepage(request):
@@ -463,66 +465,199 @@ def StartEndTracking(request):
     volunteer = Volunteer.objects.filter(id=qr_code_data).first()
 
     if surfer:
-        return handle_time_tracking(request, surfer, 'surfer_tracking_start_time', action)
+        return handle_time_tracking(request, surfer, action)
         
     elif volunteer:
-        return handle_time_tracking(request, volunteer, 'volunteer_tracking_start_time', action)
+        return handle_time_tracking(request, volunteer, action)
+    
     else:
-        return JsonResponse({'status': 'error', 'message': 'No surfer or volunteer found with the provided ID'})
+        return JsonResponse({'status': 'error', 'message': 'No surfer or volunteer found with the provided ID'}) 
 
-
-def handle_time_tracking(request, user, session_key, action):
+def handle_time_tracking(request, user, action):
     if action == 'stop':
-        
-        if session_key in request.session:
-            start_time = datetime.strptime(request.session[session_key], "%m/%d/%Y, %H:%M:%S")
-            end_time = datetime.now()
-            user.is_timing_active = False
-            # Calculate elapsed time in hours
-            elapsed_time = (end_time - start_time).total_seconds() / 3600
-            print(f"Elapsed time in minutes: {elapsed_time}") # Debug statement
+        if user.is_timing_active and user.start_time:
+            end_time = timezone.now()
+            elapsed_time = (end_time - user.start_time).total_seconds() / 3600
             user.hours += round(elapsed_time, 2)
-            print(f"Updated hours for user {user.id}: {user.hours}") # Debug statement
-            print(f"Attendance without update: {user.attendance}") # Debug statement
-            # Increment the attendance by 1
+            print(f"Users updated hours: {user.hours}")
             user.attendance += 1
-            print(f"Updated attendance for user {user.id}: {user.attendance}") # Debug statement
-
+            user.is_timing_active = False
+            user.start_time = None  # Clear the start_time
             user.save()
-
-            # Remove the start time from the session
-            del request.session[session_key]
 
             return JsonResponse({'status': 'ok', 'message': 'Time tracking ended. Hours updated.'})
         else:
-            return JsonResponse({'status': 'error', 'message': 'No start time found.'})
-    else:   # action == 'start'
-        user.is_timing_active = True
-
-        # Start time tracking by storing the current time in the session
-        request.session[session_key] = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-
-        user.save()  # Don't forget to save the updated user object
-
-        return JsonResponse({'status': 'ok', 'message': 'Time tracking started.'})
+            return JsonResponse({'status': 'error', 'message': 'No active tracking found for the user.'})
     
-# End all sessions
+    elif action == 'start':   
+        user.is_timing_active = True
+        user.start_time = datetime.now()
+        print(f"Users unupdated hours: {user.hours}")
+        user.save()
+        return JsonResponse({'status': 'ok', 'message': 'Time tracking started for the user.'})
+
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid action provided.'})
+        
+
+@csrf_exempt
 def EndAllTracking(request):
+    print("end all tracking called")
+
     # Authenticate the request to ensure that it's from an authorized source
-    if not request.user.is_admin == True:
+    if not request.user.is_admin:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    # Find all active Surfer sessions
+    # Find all active Surfer sessions and stop them
     active_surfers = Surfer.objects.filter(is_timing_active=True)
+    active_surfer_count = active_surfers.count()  # Count before stopping the sessions
 
     for surfer in active_surfers:
-        
-        handle_time_tracking(request, surfer, 'surfer_tracking_start_time', 'stop')
+        print(f"Active surfer: {surfer}")
+        handle_time_tracking(request, surfer, 'stop')
+        surfer.refresh_from_db()
+        print(f"Is surfer {surfer} active = {surfer.is_timing_active}")
 
-    # Find all active Volunteer sessions
+    # Find all active Volunteer sessions and stop them
     active_volunteers = Volunteer.objects.filter(is_timing_active=True)
+    active_volunteer_count = active_volunteers.count()  # Count before stopping the sessions
 
     for volunteer in active_volunteers:
-        handle_time_tracking(request, volunteer, 'volunteer_tracking_start_time', 'stop')
+        print(f"Active volunteer: {volunteer}")
+        handle_time_tracking(request, volunteer, 'stop')
+        volunteer.refresh_from_db()
+        print(f"Is volunteer {volunteer} active = {volunteer.is_timing_active}")
 
-    return JsonResponse({'success': True})
+    # Combine both counts
+    total_stopped_count = active_surfer_count + active_volunteer_count
+
+    return JsonResponse({'status': 'ok', 'stopped_count': total_stopped_count})
+
+
+@csrf_exempt
+def SearchUsersByName(request):
+    body_unicode = request.body.decode('utf-8')
+    body_data = json.loads(body_unicode)
+    print(f"Body data: {body_data}") # Debug statement
+
+    query = body_data.get('name', "")
+    first_name, last_name = query.split(' ', 1) if ' ' in query else (query, "")
+
+    # Querying both surfers and volunteers with the given name or email
+    surfers = Surfer.objects.filter(Q(user__first_name__icontains=first_name, user__last_name__icontains=last_name) | Q(user__email__icontains=query))
+    volunteers = Volunteer.objects.filter(Q(user__first_name__icontains=first_name, user__last_name__icontains=last_name) | Q(user__email__icontains=query))
+
+    # Combine the results and serialize to JSON
+    users = [{"first_name": user.user.first_name, "last_name": user.user.last_name, "id": user.id} for user in surfers] + \
+            [{"first_name": user.user.first_name, "last_name": user.user.last_name, "id": user.id} for user in volunteers]
+
+    return JsonResponse({'status': 'ok', 'users': users})
+
+def GetUsername(request):
+    user_id = request.GET.get('id')
+    if not user_id:
+        return JsonResponse({'status': 'error', 'message': 'User ID not provided.'}, status=400)
+
+    user_object = None
+    
+    try:
+        user_object = Volunteer.objects.get(id=user_id).user
+        return JsonResponse({
+            'status': 'ok',
+            "first_name": user_object.first_name,
+            "last_name": user_object.last_name
+        })
+    except Volunteer.DoesNotExist:
+        pass
+
+    if not user_object:
+        try:
+            user_object = Surfer.objects.get(id=user_id).user
+            return JsonResponse({
+            'status': 'ok',
+            "first_name": user_object.first_name,
+            "last_name": user_object.last_name
+            })
+        except Surfer.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found.'}, status=404)
+
+    return JsonResponse({'status': 'ok', 'first_name': user_object.first_name, 'last_name': user_object.last_name})
+
+
+# def generate_stats(request):
+#     wb = Workbook()endallsessions
+#         'ID',
+#         'Phone Number',
+#         'Address',
+#         'Country',
+#         'Date of Birth',
+#         'Age',
+#         'Onset of Condition',
+#         'Gender',
+#         'Race',
+#         'Medical Issues',
+#         'Occupation',
+#         'School',
+#         'Diagnosis and Needs',
+#         'Hours',
+#         'Attendance',
+#         'Role',
+#         'Disability',
+#         'Medication',
+#         'Extra Info',
+#         'Can Swim Longer than 5 mins?',
+#         'Comfortability in Ocean',
+#         'Emergency Contact First Name',
+#         'Emergency Contact Last Name',
+#         'Emergency Contact Cell Number',
+#         'Medical Aid',
+#         'Medical Aid Number',
+#         'Receive Newsletter',
+#         'Accepted T&C'
+#     ]
+
+#     # write the header
+#     surfer_page.append(header)
+
+#     surfers = Surfer.objects.all()
+    
+#     for surfer in surfers:
+#     ws.append([
+#         surfer.user.username,  # Assuming the User model has a 'username' field
+#         surfer.user.email,  # Assuming the User model has an 'email' field
+#         surfer.id,
+#         surfer.phone_number,
+#         surfer.address,
+#         surfer.country,
+#         surfer.DOB,
+#         surfer.age,
+#         surfer.onset_of_condition,
+#         surfer.gender,
+#         surfer.race,
+#         surfer.medical_issues,
+#         surfer.occupation,
+#         surfer.school,
+#         surfer.diagnosis_and_needs,
+#         surfer.hours,
+#         surfer.attendance,
+#         surfer.role,
+#         surfer.disability,
+#         surfer.medication,
+#         surfer.extra_info,
+#         surfer.swim_longer_than_5_min,
+#         surfer.comfortablity_in_ocean,
+#         surfer.emergency_contact_first_name,
+#         surfer.emergency_contact_last_name,
+#         surfer.emergency_contact_cell,
+#         surfer.medical_aid,
+#         surfer.medical_aid_num,
+#         surfer.receive_newsletter,
+#         surfer.accept_TandC
+#     ])
+
+#      # Create response with excel data
+#     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+#     response['Content-Disposition'] = 'attachment; filename=yearly_stats.xlsx'
+#     wb.save(response)
+
+#     return response

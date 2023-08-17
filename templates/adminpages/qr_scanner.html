@@ -1,139 +1,296 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'base.html' %} {% load static %} {% block content %}
 
-{% block content %}
+<div
+  class="relative w-96 h-96 mx-auto flex items-center justify-center mt-11 mb-5"
+> 
+  <video id="preview" class="absolute w-full h-full shadow-lg"></video>
+  <canvas id="canvas" class="absolute w-full h-full shadow-lg"></canvas>
+</div>
+<div class="flex justify-center">
+ <div id="tracking-message" class="border border-blue-500 py-4 px-4 mb-5  items-center text-center text-xl bg-white rounded shadow-lg max-w-xs" style="display: none;"></div>
+</div>
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
 
-  <head>
-    <title>QR Scanner</title>
-    <script src="{% static 'jsqr/dist/jsQR.js' %}"></script>
-  </head>
-  <body class="flex flex-col items-center justify-center h-screen bg-gray-200">
-    <div class="relative w-96 h-96 mx-auto flex items-center justify-center mt-[80px] mb-5">
-        <video id="preview" class="absolute w-full h-full"></video>
-        <canvas id="canvas" class="absolute w-full h-full"></canvas>
-    </div>
-    <div class="text-center mb-4">
-        <button id="start-tracking" class="px-4 py-4 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue active:bg-blue-800 mr-2">Start Tracking</button>
-        <button id="stop-tracking" class="px-4 py-4 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:border-red-700 focus:shadow-outline-red active:bg-red-800">Stop Tracking</button>
-        <button id="end-all-sessions" class="px-4 py-4 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:border-orange-700 focus:shadow-outline-orange active:bg-orange-800">End All Sessions</button>
-    </div>
+<div class="text-center mb-4">
+  <button
+    id="start-tracking"
+    class="px-4 py-4 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue active:bg-blue-800 mr-2 shadow-md"
+  >
+    Start Tracking
+  </button>
+  <button
+    id="stop-tracking"
+    class="px-4 py-4 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:border-red-700 focus:shadow-outline-red active:bg-red-800 mr-2 shadow-md"
+  >
+    Stop Tracking
+  </button>
+  <button
+    id="end-all-sessions"
+    class="px-4 py-4 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:border-orange-700 focus:shadow-outline-orange active:bg-orange-800 shadow-md mt-2"
+  >
+    End All Sessions
+  </button>
+</div>
+<div class="flex flex-col mx-auto my-5 p-5 text-center mb-4 bg-white max-w-lg shadow-md">
+  <input
+    type="text"
+    id="name-input"
+    placeholder="Enter name"
+    class="max-w-lg border rounded mb-2 shadow-md "
+    onkeyup="searchUsersByName(this.value)"
+  />
+  <div id="name-search-results" class=""></div>
+</div>
 
-  {% block scripts %}
-    <script type="text/javascript">
-      var endAllTrackingURL = "{% url 'roxy_admin:EndAllTracking' %}";
-      var video = document.getElementById('preview');
-      video.addEventListener('pause', function() { console.log('Video paused for some reason'); });
-      var canvasElement = document.getElementById('canvas');
-      var canvas = canvasElement.getContext('2d');
 
-      // Get the buttons
-  var startButton = document.getElementById('start-tracking');
-  var stopButton = document.getElementById('stop-tracking');
+<div id="error-message" style="color: red"></div>
 
-  // Variable to hold the last scanned QR code data
-  var lastQRCodeData = null;
+{% block scripts %}
+<script src="{% static 'jsqr/dist/jsQR.js' %}"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', initializeApp);
 
-  // Listen for clicks on the start button
-  startButton.addEventListener('click', function() {
-    handleTimeTrackingRequest('start');
-  });
+    function initializeApp() {
+        const video = document.getElementById('preview');
+        const canvasElement = document.getElementById('canvas');
+        const canvas = canvasElement.getContext('2d');
+        const startButton = document.getElementById('start-tracking');
+        const stopButton = document.getElementById('stop-tracking');
+        const endAllSessionsButton = document.getElementById('end-all-sessions');
+        const trackingMessageDiv = document.getElementById('tracking-message');
 
-var endAllSessionsButton = document.getElementById('end-all-sessions');
-endAllSessionsButton.addEventListener('click', function() {
-  var confirmAction = confirm("Are you sure you want to end all sessions?");
-  if (confirmAction) {
-    endAllSessionsRequest();
-  } else {
-    console.log("End All Sessions action was cancelled");
-  }
-});
+        let lastQRCodeData = null;
 
-function endAllSessionsRequest() {
-  fetch(endAllTrackingURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": "{{ csrf_token }}"
+        video.addEventListener('pause', onVideoPause);
+        startButton.addEventListener('click', onStartButtonClick);
+        stopButton.addEventListener('click', onStopButtonClick);
+        endAllSessionsButton.addEventListener('click', onEndAllSessionsButtonClick);
+        video.onloadedmetadata = onVideoMetadataLoaded;
+
+        function onVideoPause() {
+            console.log('Video paused for some reason');
+        }
+
+        function onStartButtonClick() {
+            handleTimeTrackingRequest('start');
+        }
+
+        function onStopButtonClick() {
+            handleTimeTrackingRequest('stop');
+        }
+
+     function displayTrackingMessage(message, isError = false) {
+            trackingMessageDiv.textContent = message;
+            trackingMessageDiv.style.color = isError ? 'red' : 'green';
+            // Show the tracking message
+            document.getElementById("tracking-message").style.display = "block";
+
+            // Hide the tracking message after 3 seconds (3000 milliseconds)
+            setTimeout(() => {
+            document.getElementById("tracking-message").style.display = "none";
+            }, 5000);
+        }
+
+        function onEndAllSessionsButtonClick() {
+            const confirmAction = confirm("Are you sure you want to end all sessions?");
+            if (confirmAction) {
+                endAllSessionsRequest();
+            } else {
+                console.log("End All Sessions action was cancelled");
+            }
+        }
+
+        function onVideoMetadataLoaded() {
+            video.play();
+            requestAnimationFrame(tick);
+        }
+        function handleTimeTrackingRequest(action, userId = null) {
+
+            if (!userId && !lastQRCodeData) {
+                console.log('No user ID provided, and no QR code has been scanned yet');
+                return;
+            }
+
+            fetch('/roxy/startendtracking/', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({
+                    action: action,
+                    id: userId || lastQRCodeData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // If the initial request is successful, fetch the user's name using their ID
+                if (data.status === 'ok') {
+                    return fetch(`/roxy/getusername/?id=${userId || lastQRCodeData}`)
+                            .then(res => res.json())
+                            .then(userData => {
+                                return {
+                                    data,
+                                    user: userData
+                                };
+                            });
+                } else {
+                    throw new Error(data.message || "An error occurred.");
+                }
+            })
+            .then(combinedData => {
+                // combinedData contains data from both requests (if successful)
+                const userName = `${combinedData.user.first_name} ${combinedData.user.last_name}`;
+                console.log(userName)
+                
+                if (action === 'start') {
+                    displayTrackingMessage(`Time tracking started for ${userName}`);
+                } else if (action === 'stop') {
+                    displayTrackingMessage(`Time tracking stopped for ${userName}`);
+                }
+            })
+            .catch(error => {
+                console.log('Error:', error);
+                displayTrackingMessage(error.message || "An error occurred.", true);
+            });
+        }
+
+        function drawLine(begin, end, color) {
+            canvas.beginPath();
+            canvas.moveTo(begin.x, begin.y);
+            canvas.lineTo(end.x, end.y);
+            canvas.lineWidth = 4;
+            canvas.strokeStyle = color;
+            canvas.stroke();
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(function(stream) {
+            video.srcObject = stream;
+            video.setAttribute('playsinline', true);
+            video.play();
+            requestAnimationFrame(tick);
+        });
+
+            function endAllSessionsRequest() {
+        fetch('/roxy/endalltracking/', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken
+            },
+            credentials: 'include',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            if (data.status === 'ok' && typeof data.stopped_count === 'number') {
+                displayTrackingMessage(`Tracking has been stopped for ${data.stopped_count} users`);
+            } else {
+                displayTrackingMessage(data.message || "An error occurred.", true);
+            }
+        })
+        .catch(error => {
+            console.error('There was an error with the request:', error);
+            displayTrackingMessage("An unexpected error occurred.", true);
+        });
     }
-  })
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.log('Error:', error));
-}
 
-  // Listen for clicks on the stop button
-  stopButton.addEventListener('click', function() {
-    handleTimeTrackingRequest('stop');
-  });
 
-  // Send a request to the StartEndTracking view
-  function handleTimeTrackingRequest(action) {
-    if (lastQRCodeData === null) {
-    console.log('No QR code has been scanned yet');
-    return;
-  }
-  fetch('{{ action_url }}', {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": "{{ csrf_token }}"
-    },
-    body: JSON.stringify({ action: action, id: lastQRCodeData })
-  })
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.log('Error:', error)); // This will log errors like the SyntaxError
-}
-    video.onloadedmetadata = function() {
-        video.play();
-        requestAnimationFrame(tick);
-        };
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
 
-      function drawLine(begin, end, color) {
-        canvas.beginPath();
-        canvas.moveTo(begin.x, begin.y);
-        canvas.lineTo(end.x, end.y);
-        canvas.lineWidth = 4;
-        canvas.strokeStyle = color;
-        canvas.stroke();
-      }
+                if (code) {
+                    drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+                    drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+                    drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+                    drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
-        video.srcObject = stream;
-        video.setAttribute('playsinline', true);
-        video.play();
-        requestAnimationFrame(tick);
-      });
+                    lastQRCodeData = code.data;
 
-function tick() {
-  if (video.readyState === video.HAVE_ENOUGH_DATA) {
-    canvasElement.height = video.videoHeight;
-    canvasElement.width = video.videoWidth;
-    canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-    var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-    var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                    const requestBody = JSON.stringify({ qr_code: code.data });
+                    console.log('Request body:', requestBody);
+                }
+                requestAnimationFrame(tick);
+            }
+        }
 
-    if (code) {
-      drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
-      drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
-      drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
-      drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
-
-      // Store the QR code data
-      lastQRCodeData = code.data;
-
-      const requestBody = JSON.stringify({ qr_code: code.data });
-      console.log('Request body:', requestBody);
+        function confirmAndHandleTracking(action, userId, userName) {
+        const confirmAction = confirm(`Would you like to ${action} tracking for ${userName}?`);
+        if (confirmAction) {
+            handleTimeTrackingRequest(action, userId);
+        }
     }
 
-    requestAnimationFrame(tick);
-  }
-}
 
- 
+        window.searchUsersByName = function(name) {
+            const search_url = "/roxy/search-users-by-name/";
+            fetch(search_url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({ name: name })
+            })
+            .then(response => response.json())
+            .then(data => {
+              const resultsDiv = document.getElementById('name-search-results');
+                resultsDiv.innerHTML = '';
+
+                // Check if the input is blank, and if so, clear the results and return
+                if (!name.trim()) {
+                    resultsDiv.innerHTML = '';
+                    return; // Exit early
+                }
+
+            if (data.status === 'ok' && data.users && data.users.length > 0) {
+                data.users.forEach(user => {
+                        const userName = `${user.first_name} ${user.last_name}`;
+
+                        const userDiv = document.createElement('div');
+                        userDiv.classList.add('user-div', 'flex', 'justify-between', 'items-center', 'space-x-4', 'mb-2');
+
+                        const nameSpan = document.createElement('span');
+                        nameSpan.innerText = userName;
+                        nameSpan.classList.add('text-lg', 'font-semibold');  // Add some style to the user name
+
+                        const startButton = document.createElement('button');
+                        startButton.innerText = "Start Tracking";
+                        startButton.classList.add('start-button', 'px-3', 'py-2', 'bg-blue-500', 'text-white', 'rounded', 'hover:bg-blue-600');
+                        startButton.addEventListener('click', function() {
+                            confirmAndHandleTracking('start', user.id, userName);
+                            console.log(user.id)
+                        });
+
+                        const stopButton = document.createElement('button');
+                        stopButton.innerText = "Stop Tracking";
+                        stopButton.classList.add('stop-button', 'px-3', 'py-2', 'bg-red-500', 'text-white', 'rounded', 'hover:bg-red-600');
+                        stopButton.addEventListener('click', function() {
+                            confirmAndHandleTracking('stop', user.id, userName);
+                        });
+
+                        userDiv.appendChild(nameSpan);
+                        userDiv.appendChild(startButton);
+                        userDiv.appendChild(stopButton);
+
+                        resultsDiv.appendChild(userDiv);
+                });
+            } else {
+                resultsDiv.innerText = 'No matching users found';
+            }
+        });
+    }
+    }
 </script>
-{% endblock %}
-
-</body>
-
-{% endblock %}
+{% endblock %} {% endblock %}

@@ -64,6 +64,9 @@ MIDDLEWARE = [
     
 ]
 
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+
 ROOT_URLCONF = "roxy_sys.urls"
 
 CORS_ALLOW_ALL_ORIGINS = True  # If you want to allow all origins

@@ -120,6 +120,7 @@ class Volunteer(models.Model):
     accept_TandC = models.CharField(max_length=3)
     qr_code = models.ImageField(upload_to='qrcodes', blank=True)
     is_timing_active = models.BooleanField(default=False)
+    start_time = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.qr_code:
@@ -186,6 +187,7 @@ class Surfer(models.Model):
     accept_TandC = models.CharField(max_length=3)
     qr_code = models.ImageField(upload_to='qr_codes', blank=True)
     is_timing_active = models.BooleanField(default=False)
+    start_time = models.DateTimeField(null=True, blank=True)
 
 
     def save(self, *args, **kwargs):

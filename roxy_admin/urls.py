@@ -38,5 +38,8 @@ urlpatterns = [
     path('qrscanner/', views.QRScannerView, name='QR_Scanner'),
     path('startendtracking/', views.StartEndTracking , name='StartEndTracking'),
     path('endalltracking/', views.EndAllTracking , name='EndAllTracking'),
-
+    path('search-users-by-name/', views.SearchUsersByName, name='SearchUsersByName'),
+    path('getusername/', views.GetUsername, name='GetUsername'),
 ]
+
+

@@ -86,6 +86,7 @@ class Volunteer(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
+    financial_year = models.IntegerField(default=date.today().year)
 
     id = models.UUIDField( default=uuid.uuid4, editable=False, unique=True, db_index=True , primary_key=True)
     phone_number = models.CharField(max_length=100)
@@ -116,8 +117,8 @@ class Volunteer(models.Model):
     emergency_contact_cell = models.CharField(max_length=100)
     medical_aid = models.CharField(max_length=100)
     medical_aid_num = models.CharField(max_length=100)
-    receive_newsletter = models.CharField(max_length=3)
-    accept_TandC = models.CharField(max_length=3)
+    receive_newsletter = models.CharField(max_length=100)
+    accept_TandC = models.CharField(max_length=100)
     qr_code = models.ImageField(upload_to='qrcodes', blank=True)
     is_timing_active = models.BooleanField(default=False)
     start_time = models.DateTimeField(null=True, blank=True)
@@ -151,7 +152,11 @@ class Volunteer(models.Model):
 
 class Surfer(models.Model):
     """Model representing a surfer."""
+
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    financial_year = models.IntegerField(default=date.today().year)
     id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True, primary_key=True)
     phone_number = models.CharField(max_length=100)
     address = models.CharField(max_length=100)
@@ -183,8 +188,8 @@ class Surfer(models.Model):
     emergency_contact_cell = models.CharField(max_length=100)
     medical_aid = models.CharField(max_length=100)
     medical_aid_num = models.CharField(max_length=100)
-    receive_newsletter = models.CharField(max_length=3)
-    accept_TandC = models.CharField(max_length=3)
+    receive_newsletter = models.CharField(max_length=100)
+    accept_TandC = models.CharField(max_length=100)
     qr_code = models.ImageField(upload_to='qr_codes', blank=True)
     is_timing_active = models.BooleanField(default=False)
     start_time = models.DateTimeField(null=True, blank=True)
@@ -231,5 +236,83 @@ class Event(models.Model):
         return f"{self.title}"
 
 
+class VolunteerArchive(models.Model):
+    """ Archive model for Volunteer """
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
+    financial_year = models.IntegerField(default=0)
 
+    id = models.UUIDField( default=uuid.uuid4, editable=False, unique=True, db_index=True , primary_key=True)
+    phone_number = models.CharField(max_length=100)
+    address = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    DOB = models.DateField()
+    age = models.IntegerField(default=0)
+    gender = models.CharField(max_length=100)
+    race = models.CharField(max_length=100)
+    hours = models.FloatField(default=0.0)
+    attendance = models.IntegerField(default=0)
+    role = models.CharField(max_length=100)
+    medical_issues = models.CharField(max_length=1000)
+    occupation = models.CharField(max_length=100)
+    offered_services = models.CharField(max_length=1000)
+    availablity = models.CharField(max_length=100)
+    extra_info = models.CharField(max_length=500)
+    swim_longer_than_5_min = models.BooleanField()
+    comfortablity_in_ocean = models.CharField(max_length=100)
+    previous_volunteer = models.BooleanField()
+    emergency_contact_first_name = models.CharField(max_length=100)
+    emergency_contact_last_name = models.CharField(max_length=100)
+    emergency_contact_cell = models.CharField(max_length=100)
+    medical_aid = models.CharField(max_length=100)
+    medical_aid_num = models.CharField(max_length=100)
+    accept_TandC = models.CharField(max_length=3)
+    qr_code = models.ImageField(upload_to='qrcodes', blank=True)
+
+    def __str__(self):
+        """
+        String representation of the volunteer object.
+        """
+        return f"{self.user.first_name} {self.user.last_name}"
+
+class SurferArchive(models.Model):
+    """ Archive model for Surfer """
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    financial_year = models.IntegerField(default=0000)
+    id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True, primary_key=True)
+    phone_number = models.CharField(max_length=100)
+    address = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    DOB = models.DateField()
+    
+    age = models.IntegerField(default=0)
+    
+    onset_of_condition = models.DateField()
+    gender = models.CharField(max_length=100)
+    race = models.CharField(max_length=100)
+    medical_issues = models.CharField(max_length=1000)
+    occupation = models.CharField(max_length=100)
+    school = models.CharField(max_length=100)
+    diagnosis_and_needs = models.CharField(max_length=1000)
+    hours = models.FloatField(default=0.0)
+    attendance = models.IntegerField(default=0)
+    role = models.CharField(max_length=100)
+    disability = models.CharField(max_length=100)
+    medication = models.CharField(max_length=500)
+    extra_info = models.CharField(max_length=500)
+    swim_longer_than_5_min = models.BooleanField()
+    comfortablity_in_ocean = models.CharField(max_length=100)
+    emergency_contact_first_name = models.CharField(max_length=100)
+    emergency_contact_last_name = models.CharField(max_length=100)
+    emergency_contact_cell = models.CharField(max_length=100)
+    medical_aid = models.CharField(max_length=100)
+    medical_aid_num = models.CharField(max_length=100)
+    accept_TandC = models.CharField(max_length=3)
+    qr_code = models.ImageField(upload_to='qr_codes', blank=True)
+
+    def __str__(self):
+        """
+        String representation of the surfer object.
+        """
+        return f"{self.user.first_name} {self.user.last_name}"

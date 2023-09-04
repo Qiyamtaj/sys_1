@@ -306,7 +306,7 @@ def advanced_search(request):
     
     param_names = [
         'q', 'race', 'gender', 'age_min', 'age_max', 'occupation', 'hours_min', 'hours_max', 'attendance',
-        'disability', 'role'
+        'disability', 'role', 'financial_year'
     ]
 
     params = {name: request.GET.get(name, '') for name in param_names}
@@ -349,6 +349,10 @@ def advanced_search(request):
 
     if params['disability']:
         surfers = surfers.filter(disability__icontains=params['disability'])
+
+    if params['financial_year']:
+        surfers = surfers.filter(financial_year__icontains=params['disability'])
+        volunteers = volunteers.filter(financial_year__icontains=params['disability'])
 
     if params['role']:
         volunteers = volunteers.filter(role__icontains=params['role'])

@@ -151,13 +151,20 @@
               class="block text-sm font-normal mb-2"
               >{{ surfer_form.race.label }}:
             </label>
-            <input
-              type="text"
+            <select
               name="{{ surfer_form.race.html_name }}"
               id= "race"
-              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
               required
-            />
+            >
+              <option value="">Select Ethinicity</option>
+              <option value="African">African</option>
+              <option value="Coloured">Coloured</option>
+              <option value="Indian">Indian</option>
+              <option value="Asain">Asain</option>
+              <option value="Mixed">Mixed</option>
+              <option value="White">White</option>
+            </select>
           </div>
         </div>
 

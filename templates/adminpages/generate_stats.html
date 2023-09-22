@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<head>
+  <script src="{% static 'js/search_form.js' %}"></script>
+  <title>Roxy Home</title>
+</head>
+
+<!-- Top header -->
+<div class="flex flex-col bg-white shadow-md rounded px-8 pt-6 pb-8 mx-8 my-2 h-screen"> <!--Main div-->
+<form method="POST" action="{% url 'roxy:GenerateStats' %}">
+            {% csrf_token %}
+            <button type="submit" name="export_to_excel" class="text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg p-2">Create yearly stats excel doc </button>
+            </form>
+</div>          
+
+
+<!-- Displaying filtered surfers and volunteers -->
+
+{% block scripts %}
+
+{% endblock %}
+
+
+{% endblock %}

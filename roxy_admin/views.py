@@ -17,6 +17,7 @@ from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.utils import timezone
+from collections import defaultdict
 
 
 # Homepage
@@ -286,77 +287,64 @@ def advanced_search(request):
     # Retrieve query parameters from the request
     if request.method == 'POST':
         selected_users = request.POST.getlist('selected_users')
-
-        # Add the selected users to the session
-        if 'selected_users' in request.session:
-            # Here, we are converting session data into set to avoid duplicate entries and then back to list
-            request.session['selected_users'] = list(set(request.session['selected_users']).union(selected_users))
-        else:
-            request.session['selected_users'] = selected_users
-
-        request.session.modified = True  # Ensure the session is saved
-
-        # Add the selected users to the session
-        if 'selected_users' in request.session:
-            request.session['selected_users'].extend(selected_users)
-        else:
-            request.session['selected_users'] = selected_users
-
+        
+        # Combine the session users and the new selected users
+        session_users = set(request.session.get('selected_users', []))
+        request.session['selected_users'] = list(session_users.union(selected_users))
+        
         request.session.modified = True  # Ensure the session is saved
     
     param_names = [
         'q', 'race', 'gender', 'age_min', 'age_max', 'occupation', 'hours_min', 'hours_max', 'attendance',
         'disability', 'role', 'financial_year'
     ]
-
     params = {name: request.GET.get(name, '') for name in param_names}
 
-    # Apply the filters based on the query parameters
-    # Initialize volunteers and surfers with all entries
-    volunteers = Volunteer.objects.all()
-    surfers = Surfer.objects.all()
+    def apply_filters(queryset):
+        """Helper function to apply filters to a queryset"""
+        if params['q']:
+            query = params['q'].replace(" ", "")
+            queryset = queryset.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+        
+        if params['race']:
+            queryset = queryset.filter(race__icontains=params['race'])
+        
+        if params['gender']:
+            queryset = queryset.filter(gender__iexact=params['gender'])
 
-    if params['q']:
-        query = params['q'].replace(" ", "")
-        volunteers = volunteers.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
-        surfers = surfers.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+        if params['age_min'] and params['age_max']:
+            min_dob = date.today() - relativedelta(years=int(params['age_max']))
+            max_dob = date.today() - relativedelta(years=int(params['age_min']))
+            queryset = queryset.filter(DOB__gte=min_dob, DOB__lte=max_dob)
+        
+        if params['occupation']:
+            queryset = queryset.filter(occupation__icontains=params['occupation'])
 
-    if params['race']:
-        volunteers = volunteers.filter(race__icontains=params['race'])
-        surfers = surfers.filter(race__icontains=params['race'])
+        if params['hours_min'] and params['hours_max']:
+            queryset = queryset.filter(hours__gte=int(params['hours_min']), hours__lte=int(params['hours_max']))
 
-    if params['gender']:
-        volunteers = volunteers.filter(gender__iexact=params['gender'])
-        surfers = surfers.filter(gender__iexact=params['gender'])
+        if params['attendance']:
+            queryset = queryset.filter(attendance=int(params['attendance']))
 
-    if params['age_min'] and params['age_max']:
-        min_dob = date.today() - relativedelta(years=int(params['age_max']))
-        max_dob = date.today() - relativedelta(years=int(params['age_min']))
+        if params['disability']:
+            queryset = queryset.filter(disability__icontains=params['disability'])
 
-        volunteers = volunteers.filter(DOB__gte=min_dob, DOB__lte=max_dob)
-        surfers = surfers.filter(DOB__gte=min_dob, DOB__lte=max_dob)
+        if params['role']:
+            queryset = queryset.filter(role__icontains=params['role'])
+        
+        if params['financial_year']:
+            queryset = queryset.filter(financial_year__icontains=params['financial_year'])
 
-
-    if params['occupation']:
-        volunteers = volunteers.filter(occupation__icontains=params['occupation'])
-        surfers = surfers.filter(occupation__icontains=params['occupation'])
-
-    if params['hours_min'] and params['hours_max']:
-        volunteers = volunteers.filter(hours__gte=int(params['hours_min']), hours__lte=int(params['hours_max']))
-
-    if params['attendance']:
-        volunteers = volunteers.filter(attendance=int(params['attendance']))
-
-    if params['disability']:
-        surfers = surfers.filter(disability__icontains=params['disability'])
-
-    if params['financial_year']:
-        surfers = surfers.filter(financial_year__icontains=params['disability'])
-        volunteers = volunteers.filter(financial_year__icontains=params['disability'])
-
-    if params['role']:
-        volunteers = volunteers.filter(role__icontains=params['role'])
-        surfers = surfers.filter(role__icontains=params['role'])
+        return queryset
+    
+    # Apply filters to active models
+    volunteers = apply_filters(Volunteer.objects.all())
+    surfers = apply_filters(Surfer.objects.all())
+    
+    # If no entries are found in active models, check the archived models
+    if not volunteers.exists() and not surfers.exists() and params['financial_year']:
+        volunteers = apply_filters(VolunteerArchive.objects.all())
+        surfers = apply_filters(SurferArchive.objects.all())
 
     context = {
         **params,
@@ -366,13 +354,13 @@ def advanced_search(request):
 
     return render(request, 'adminpages/advanced_search.html', context)
 
+
 # Export to Excel
 def export_excel(request):
     
     if request.method == 'POST':
          selected_users_ids = request.session.get('selected_users', [])
 
-    print(f'Selected users:{selected_users_ids}')
 
     # filter out any empty strings
     selected_users_ids = [id for id in selected_users_ids if id]
@@ -587,81 +575,165 @@ def GetUsername(request):
 
     return JsonResponse({'status': 'ok', 'first_name': user_object.first_name, 'last_name': user_object.last_name})
 
+def generate_stats_page(request):
+    return render(request, 'adminpages/generate_stats.html')
 
-# def generate_stats(request):
-#     wb = Workbook()endallsessions
-#         'ID',
-#         'Phone Number',
-#         'Address',
-#         'Country',
-#         'Date of Birth',
-#         'Age',
-#         'Onset of Condition',
-#         'Gender',
-#         'Race',
-#         'Medical Issues',
-#         'Occupation',
-#         'School',
-#         'Diagnosis and Needs',
-#         'Hours',
-#         'Attendance',
-#         'Role',
-#         'Disability',
-#         'Medication',
-#         'Extra Info',
-#         'Can Swim Longer than 5 mins?',
-#         'Comfortability in Ocean',
-#         'Emergency Contact First Name',
-#         'Emergency Contact Last Name',
-#         'Emergency Contact Cell Number',
-#         'Medical Aid',
-#         'Medical Aid Number',
-#         'Receive Newsletter',
-#         'Accepted T&C'
-#     ]
 
-#     # write the header
-#     surfer_page.append(header)
 
-#     surfers = Surfer.objects.all()
-    
-#     for surfer in surfers:
-#     ws.append([
-#         surfer.user.username,  # Assuming the User model has a 'username' field
-#         surfer.user.email,  # Assuming the User model has an 'email' field
-#         surfer.id,
-#         surfer.phone_number,
-#         surfer.address,
-#         surfer.country,
-#         surfer.DOB,
-#         surfer.age,
-#         surfer.onset_of_condition,
-#         surfer.gender,
-#         surfer.race,
-#         surfer.medical_issues,
-#         surfer.occupation,
-#         surfer.school,
-#         surfer.diagnosis_and_needs,
-#         surfer.hours,
-#         surfer.attendance,
-#         surfer.role,
-#         surfer.disability,
-#         surfer.medication,
-#         surfer.extra_info,
-#         surfer.swim_longer_than_5_min,
-#         surfer.comfortablity_in_ocean,
-#         surfer.emergency_contact_first_name,
-#         surfer.emergency_contact_last_name,
-#         surfer.emergency_contact_cell,
-#         surfer.medical_aid,
-#         surfer.medical_aid_num,
-#         surfer.receive_newsletter,
-#         surfer.accept_TandC
-#     ])
+def generate_stats(request):
+    surfers = Surfer.objects.all()
+    volunteers = Volunteer.objects.all()
 
-#      # Create response with excel data
-#     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-#     response['Content-Disposition'] = 'attachment; filename=yearly_stats.xlsx'
-#     wb.save(response)
+    wb = Workbook()
 
-#     return response
+    # Create sheets for surfers and volunteers
+    ws_surfers = create_sheet(wb, "Surfers", surfers)
+    ws_volunteers = create_sheet(wb, "Volunteers", volunteers)
+
+    # Create response with excel data
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=yearly_stats.xlsx'
+    wb.save(response)
+
+    return response
+
+def create_sheet(wb, title, data):
+    if title == "Surfers":
+        headers = [
+	'Phone Number',
+        'Address',
+        'Country',
+        'Date of Birth',
+        'Age',
+        'Onset of Condition',
+        'Gender',
+        'Race',
+        'Medical Issues',
+        'Occupation',
+        'School',
+        'Diagnosis and Needs',
+        'Hours',
+        'Attendance',
+        'Role',
+        'Disability',
+        'Medication',
+        'Extra Info',
+        'Can Swim Longer than 5 mins?',
+        'Comfortability in Ocean',
+        'Emergency Contact First Name',
+        'Emergency Contact Last Name',
+        'Emergency Contact Cell Number',
+        'Medical Aid',
+        'Medical Aid Number',
+        'Receive Newsletter',
+        'Accepted T&C',
+        'Younger than 18',
+        'Between 18 & 34',
+        '35+'
+        ]
+    else:
+        headers = [
+        'Phone Number',
+        'Address',
+        'Country',
+        'Date of Birth',
+        'Age',
+        'Onset of Condition',
+        'Gender',
+        'Race',
+        'Medical Issues',
+        'Occupation',
+        'School',
+        'Diagnosis and Needs',
+        'Hours',
+        'Attendance',
+        'Role',
+        'Disability',
+        'Medication',
+        'Extra Info',
+        'Can Swim Longer than 5 mins?',
+        'Comfortability in Ocean',
+        'Emergency Contact First Name',
+        'Emergency Contact Last Name',
+        'Emergency Contact Cell Number',
+        'Medical Aid',
+        'Medical Aid Number',
+        'Receive Newsletter',
+        'Accepted T&C',
+        ]
+
+    ws = wb.active if title == "Surfers" else wb.create_sheet(title=title)
+    ws.title = title
+
+    totals = fetch_totals(data)
+
+    # Append headers and data to the sheet
+    ws.append(["Totals"] + [""] * (len(headers) - 1))
+    ws.append(["Total", "Gender Count", "Male", "Female", "Non-binary", "Other", "Age Groups", "Younger than 18", "Between 18 & 34", "35+"] + [""] * (len(headers) - 4))
+    ws.append([
+        totals['total'],
+        "",
+        totals['male'],
+        totals['female'],
+        totals['nonbinary'],
+        totals['other'],
+        "",
+        totals['under_18_total'],
+        totals['18_to_34'],
+        totals['35_plus']
+    ] + [""] * (len(headers) - 4))
+    ws.append(headers)
+
+    for item in data:
+        ws.append([
+            item.phone_number,
+            item.address,
+            item.country,
+            item.DOB,
+            item.age,
+            item.gender,
+            item.race,
+            item.medical_issues,
+            item.occupation,
+            item.hours,
+            item.attendance,
+            item.role,
+            item.extra_info,
+            item.swim_longer_than_5_min,
+            item.comfortablity_in_ocean,
+            item.emergency_contact_first_name,
+            item.emergency_contact_last_name,
+            item.emergency_contact_cell,
+            item.medical_aid,
+            item.medical_aid_num,
+            item.receive_newsletter,
+            item.accept_TandC,
+        ])
+
+    return ws
+
+def fetch_totals(data):
+    counts = defaultdict(int)
+
+    for item in data:
+        if item.gender == "Female":
+            counts['female'] += 1
+        elif item.gender == "Male":
+            counts['male'] += 1
+        elif item.gender == "Non-binary":
+            counts['nonbinary'] += 1
+        elif item.gender == "Other":
+            counts['other'] += 1
+
+        if item.age < 18:
+            counts['under_18_total'] += 1
+        elif 18 <= item.age <= 34:
+            counts['18_to_34'] += 1
+        else:
+            counts['35_plus'] += 1
+
+    counts['total'] = counts['male'] + counts['female'] + counts['nonbinary'] + counts['other']
+
+    return counts
+
+

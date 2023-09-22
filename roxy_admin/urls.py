@@ -40,6 +40,9 @@ urlpatterns = [
     path('endalltracking/', views.EndAllTracking , name='EndAllTracking'),
     path('search-users-by-name/', views.SearchUsersByName, name='SearchUsersByName'),
     path('getusername/', views.GetUsername, name='GetUsername'),
+    # Stats Path
+    path('generate-stats_page/', views.generate_stats_page, name='GenerateStatsPage'),
+    path('generate-stats/', views.generate_stats, name='GenerateStats'),
 ]
 
 

@@ -3,7 +3,7 @@
 <head>
   <link href="{% static 'src/output.css' %}" rel="stylesheet" />
     <script src="{% static 'js/form_util.js' %}"></script>
-  <title>Surfer Creation Form</title>
+  <title>Volunteer Creation Form</title>
 </head>
 
 <body class="bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500">
@@ -15,10 +15,10 @@
     <!-- User Creation Form -->
     <div class="flex justify-center items-center">
       <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 my-2">
-        <h2 class="mb-4">Start your surfing journey now!</h2>
+        <h2 class="mb-4">Start giving back!</h2>
         
-        <!--Auto setting user's role to surfer-->
-        <input type="hidden" name="role" value="Surfer">
+        <!--Auto setting user's role to Volunteer-->
+        <input type="hidden" name="role" value="Volunteer">
 
         <!--Name fields -->
         <div class="-mx-3 md:flex mb-6">
@@ -101,9 +101,7 @@
             />
           </div>
         </div>
-
-        <!-- Surfer Form -->
-
+        
           <!-- DOB field -->
           <div class="mx-3 md:flex mb-6">
             <label
@@ -151,13 +149,21 @@
               class="block text-sm font-normal mb-2"
               >{{ volunteer_form.race.label }}:
             </label>
-            <input
-              type="text"
+            <select
               name="{{ volunteer_form.race.html_name }}"
               id= "race"
-              class="border border-gray-300 rounded px-4 py-2 mb-4 input-field"
+              class="border w-full border-gray-300 rounded px-4 py-2 mb-4 input-field"
               required
-            />
+            >
+              <option value="">Select Ethinicity</option>
+              <option value="African">African</option>
+              <option value="Coloured">Coloured</option>
+              <option value="Indian">Indian</option>
+              <option value="Asain">Asain</option>
+              <option value="Mixed">Mixed</option>
+              <option value="White">White</option>
+            </select>
+          </div>
           </div>
         </div>
 
@@ -219,7 +225,7 @@
           <!-- Occupation field -->
           <div class="md:w-1/2 px-3 mb-6 md:mb-0">
             <label
-              for="{{ surfer_form.occupation.id_for_label }}"
+              for="{{ Volunteer_form.occupation.id_for_label }}"
               class="block text-sm font-normal mb-2"
               >{{ volunteer_form.occupation.label }}:
             </label>
